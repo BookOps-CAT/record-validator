@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "record-validator"
+version = "0.1.0"
+description = ""
+authors = ["Charlotte Kostelic <charlottekostelic@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pydantic = "^2.8.2"
+pymarc = "^5.2.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+pytest-cov = "^5.0.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+relative_files = true
+source = ["."]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
