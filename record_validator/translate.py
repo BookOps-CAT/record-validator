@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 from pydantic_core import ErrorDetails
 
 
@@ -48,58 +48,50 @@ class MarcError:
 
     def __init__(self, error: ErrorDetails):
         self.original_error = error
+        self.type = error.get("type")
         self.input = self._get_input()
-        self.msg = self._get_msg()
         self.loc = self._get_loc()
-        self.type = error.get("type", None)
+        self.msg = error.get("msg", None)
         self.ctx = error.get("ctx", None)
         self.url = error.get("url", None)
         self.loc_marc = self._loc2marc()
 
-    def _get_msg(self) -> Optional[str]:
-        msg = self.original_error.get("msg")
-        return msg
-
     def _get_input(self):
-        input = self.original_error.get("input")
-        if self.original_error["type"] == "order_item_mismatch":
+        if self.type == "order_item_mismatch":
             return (
-                input["item_type"],
-                input["item_location"],
-                input["order_location"],
+                self.original_error["input"]["item_type"],
+                self.original_error["input"]["item_location"],
+                self.original_error["input"]["order_location"],
             )
         else:
-            return input
+            return self.original_error.get("input")
 
     def _get_loc(self):
-        loc = self.original_error.get("loc")
-        if self.original_error["type"] == "order_item_mismatch":
+        if self.type == "order_item_mismatch":
             return (
                 "order_field",
                 "item_location",
                 "item_type",
             )
+        elif self.type == "missing_required_field":
+            return (
+                "fields",
+                self.input,
+            )
         else:
-            return loc
+            return self.original_error.get("loc")
 
     def _loc2marc(self) -> Union[str, Tuple[str, str, str]]:
         out_loc = []
         if self.type == "order_item_mismatch":
             return ("960$t", "949_$l", "949_$t")
-        if "949" in self.loc:
-            locs = [i for i in self.loc if i != "fields" and i != "subfields"]
-        else:
-            locs = [
-                i
-                for i in self.loc
-                if i != "fields" and i != "subfields" and isinstance(i, str)
-            ]
+        locs = [
+            i
+            for i in self.loc
+            if i != "fields" and i != "subfields" and isinstance(i, str)
+        ]
         for i in locs:
-            if isinstance(i, int):
-                out_loc.append(f"_{i + 1}_")
-            elif "subfields." in i:
-                out_loc.append(f"${i.split('subfields.')[1]}")
-            elif i in MarcEncoding.__members__:
+            if i in MarcEncoding.__members__:
                 out_loc.append(MarcEncoding[str(i)].value)
             elif len(i) == 1 and not i.isdigit():
                 out_loc.append(f"${i}")
