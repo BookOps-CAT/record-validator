@@ -4,7 +4,7 @@ from typing import Annotated, Dict, List, Union
 from pydantic import BaseModel, Field, ConfigDict
 from pymarc import Field as MarcField
 from pydantic.functional_validators import AfterValidator
-from record_validator.validators import validate_fields
+from record_validator.parsers import validate_fields
 
 
 class MonographRecord(BaseModel):

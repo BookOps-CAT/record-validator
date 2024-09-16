@@ -320,121 +320,55 @@ def test_MonographRecord_valid_location_combos(
 
 
 def test_MonographRecord_order_item_data_not_checked(stub_record):
+    stub_record["949"].delete_subfield("t")
+    stub_record["949"].add_subfield("t", "2")
     stub_record["960"].delete_subfield("t")
-    stub_record["960"].add_subfield("t", "MAB")
-    stub_record["980"].delete_subfield("b")
     with pytest.raises(ValidationError) as e:
         MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
     error_types = [error["type"] for error in e.value.errors()]
-    error_locs = [error["loc"] for error in e.value.errors()]
     assert len(e.value.errors()) == 1
     assert "order_item_mismatch" not in error_types
     assert error_types == ["missing"]
-    assert error_locs == [
-        (
-            "fields",
-            "980",
-            "invoice_price",
-        )
-    ]
 
 
-# @pytest.mark.parametrize(
-#     "order_location_value,item_location_value,item_type_value,",
-#     [
-#         ("MAB", "rc2ma", "55"),
-#         ("MAS", None, None),
-#         ("MAG", "rcmf2", "55"),
-#         ("MAF", "rc2ma", None),
-#         ("MAL", "rcmg2", "55"),
-#     ],
-# )
-# def test_MonographRecord_invalid_order_item_data(
-#     stub_record, order_location_value, item_location_value, item_type_value
-# ):
-#     stub_record["949"].delete_subfield("l")
-#     stub_record["949"].delete_subfield("t")
-#     stub_record["960"].delete_subfield("t")
-#     stub_record["960"].add_subfield("t", order_location_value)
-#     if item_location_value is not None:
-#         stub_record["949"].add_subfield("l", item_location_value)
-#     if item_type_value is not None:
-#         stub_record["949"].add_subfield("t", item_type_value)
-#     model = MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
-#     assert model.model_dump()["order_items"] == {}
-# with pytest.raises(ValidationError) as e:
-#     MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
-# assert len(e.value.errors()) == 1
-# assert e.value.errors()[0]["type"] == "order_item_mismatch"
+@pytest.mark.parametrize(
+    "order_location_value,item_location_value,item_type_value,",
+    [
+        ("MAB", "rc2ma", "55"),
+        ("MAS", None, None),
+        ("MAG", "rcmf2", "55"),
+        ("MAF", "rc2ma", None),
+        ("MAL", "rcmg2", "55"),
+    ],
+)
+def test_MonographRecord_invalid_order_item_data(
+    stub_record, order_location_value, item_location_value, item_type_value
+):
+    stub_record["949"].delete_subfield("l")
+    stub_record["949"].delete_subfield("t")
+    stub_record["960"].delete_subfield("t")
+    stub_record["960"].add_subfield("t", order_location_value)
+    if item_location_value is not None:
+        stub_record["949"].add_subfield("l", item_location_value)
+    if item_type_value is not None:
+        stub_record["949"].add_subfield("t", item_type_value)
+    with pytest.raises(ValidationError) as e:
+        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+    assert len(e.value.errors()) == 1
+    assert e.value.errors()[0]["type"] == "order_item_mismatch"
 
 
-# @pytest.mark.parametrize(
-#     "order_location_value,item_location_value,item_type_value,",
-#     [
-#         ("MAB", "rcmf2", "55"),
-#         ("MAS", "rcmb2", None),
-#         ("MAF", "rc2ma", "2"),
-#         ("MAF", "rc2cf", None),
-#         ("MAG", "rcpt2", "55"),
-#         ("MAG", "rc2ma", None),
-#     ],
-# )
-# def test_MonographRecord_invalid_order_item_data_multiple(
-#     mock_bib_call_no,
-#     mock_bib_vendor_code,
-#     mock_lc_class,
-#     mock_library,
-#     mock_invoice_field,
-#     order_location_value,
-#     item_location_value,
-#     item_type_value,
-# ):
-#     with pytest.raises(ValidationError) as e:
-#         MonographRecord(
-#             leader="00000cam a2200000 a 4500",
-#             fields=[{"245": {"a": "The Title"}}],
-#             bib_call_no=mock_bib_call_no,
-#             bib_vendor_code=mock_bib_vendor_code,
-#             lc_class=mock_lc_class,
-#             library_field=mock_library,
-#             material_type="monograph",
-#             order_field={
-#                 "ind1": " ",
-#                 "ind2": " ",
-#                 "order_price": "123",
-#                 "order_location": order_location_value,
-#                 "order_fund": "123",
-#             },
-#             invoice_field=mock_invoice_field,
-#             item_fields=[
-#                 {
-#                     "ind1": " ",
-#                     "ind2": "1",
-#                     "item_call_tag": "8528",
-#                     "item_call_no": "ReCAP 23-000000",
-#                     "item_barcode": "33433123456789",
-#                     "item_price": "1.00",
-#                     "item_vendor_code": "EVP",
-#                     "item_agency": "43",
-#                     "item_location": item_location_value,
-#                     "item_type": item_type_value,
-#                 },
-#                 {
-#                     "ind1": " ",
-#                     "ind2": "1",
-#                     "item_call_tag": "8528",
-#                     "item_call_no": "ReCAP 23-000000",
-#                     "item_barcode": "33433987654321",
-#                     "item_price": "1.00",
-#                     "item_vendor_code": "EVP",
-#                     "item_agency": "43",
-#                     "item_location": item_location_value,
-#                     "item_type": item_type_value,
-#                 },
-#             ],
-#         )
-#     assert len(e.value.errors()) == 1
-#     assert e.value.errors()[0]["type"] == "order_item_mismatch"
+def test_MonographRecord_invalid_order_item_data_multiple(stub_record, stub_item):
+    stub_record["949"].delete_subfield("l")
+    stub_record["949"].add_subfield("l", "rcmg2")
+    stub_record["960"].delete_subfield("t")
+    stub_record["960"].add_subfield("t", "MAP")
+    stub_record.add_field(stub_item)
+    with pytest.raises(ValidationError) as e:
+        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+    assert len(e.value.errors()) == 2
+    assert e.value.errors()[0]["type"] == "order_item_mismatch"
+
 
 # def test_MonographRecord_invalid_material_type(
 #     mock_bib_call_no,

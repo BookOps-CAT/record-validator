@@ -197,10 +197,6 @@ class OrderField(BaseDataField):
     ]
 
 
-# class OrderItem(BaseOrderItem):
-#     order_item_combination: Dict[str, Union[str, None]]
-
-
 class OtherDataField(BaseDataField):
     tag: Annotated[
         str,

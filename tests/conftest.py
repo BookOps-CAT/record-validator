@@ -4,7 +4,81 @@ from pymarc import Field as MarcField
 
 
 @pytest.fixture
-def stub_record():
+def stub_item():
+    item_field = MarcField(
+        tag="949",
+        indicators=[" ", "1"],
+        subfields=[
+            Subfield(code="z", value="8528"),
+            Subfield(code="a", value="ReCAP 23-100000"),
+            Subfield(code="c", value="1"),
+            Subfield(code="h", value="43"),
+            Subfield(code="i", value="33433123456789"),
+            Subfield(code="l", value="rcmf2"),
+            Subfield(code="m", value="bar"),
+            Subfield(code="p", value="1.00"),
+            Subfield(code="t", value="55"),
+            Subfield(code="u", value="foo"),
+            Subfield(code="v", value="AUXAM"),
+        ],
+    )
+    return item_field
+
+
+@pytest.fixture
+def stub_item_dict():
+    return {
+        "949": [
+            {"z": "8528"},
+            {"a": "ReCAP 23-100000"},
+            {"c": "1"},
+            {"h": "43"},
+            {"i": "33433123456789"},
+            {"l": "rcmf2"},
+            {"m": "bar"},
+            {"p": "1.00"},
+            {"t": "55"},
+            {"u": "foo"},
+            {"v": "AUXAM"},
+        ]
+    }
+
+
+@pytest.fixture
+def stub_order():
+    order_field = MarcField(
+        tag="960",
+        indicators=[" ", " "],
+        subfields=[
+            Subfield(code="s", value="100"),
+            Subfield(code="t", value="MAF"),
+            Subfield(code="u", value="123456apprv"),
+        ],
+    )
+    return order_field
+
+
+@pytest.fixture
+def stub_invoice():
+    invoice_field = MarcField(
+        tag="980",
+        indicators=[" ", " "],
+        subfields=[
+            Subfield(code="a", value="240101"),
+            Subfield(code="b", value="100"),
+            Subfield(code="c", value="100"),
+            Subfield(code="d", value="000"),
+            Subfield(code="e", value="200"),
+            Subfield(code="f", value="123456"),
+            Subfield(code="g", value="1"),
+        ],
+    )
+
+    return invoice_field
+
+
+@pytest.fixture
+def stub_record(stub_item, stub_order, stub_invoice):
     bib = Record()
     bib.leader = "00820cam a22001935i 4500"
     bib.add_field(MarcField(tag="008", data="190306s2017    ht a   j      000 1 hat d"))
@@ -71,55 +145,13 @@ def stub_record():
             ],
         )
     )
-    bib.add_field(
-        MarcField(
-            tag="949",
-            indicators=[" ", "1"],
-            subfields=[
-                Subfield(code="z", value="8528"),
-                Subfield(code="a", value="ReCAP 23-100000"),
-                Subfield(code="c", value="1"),
-                Subfield(code="h", value="43"),
-                Subfield(code="i", value="33433123456789"),
-                Subfield(code="l", value="rcmf2"),
-                Subfield(code="m", value="bar"),
-                Subfield(code="p", value="1.00"),
-                Subfield(code="t", value="55"),
-                Subfield(code="u", value="foo"),
-                Subfield(code="v", value="AUXAM"),
-            ],
-        )
-    )
-    bib.add_field(
-        MarcField(
-            tag="960",
-            indicators=[" ", " "],
-            subfields=[
-                Subfield(code="s", value="100"),
-                Subfield(code="t", value="MAF"),
-                Subfield(code="u", value="123456apprv"),
-            ],
-        )
-    )
-    bib.add_field(
-        MarcField(
-            tag="980",
-            indicators=[" ", " "],
-            subfields=[
-                Subfield(code="a", value="240101"),
-                Subfield(code="b", value="100"),
-                Subfield(code="c", value="100"),
-                Subfield(code="d", value="000"),
-                Subfield(code="e", value="200"),
-                Subfield(code="f", value="123456"),
-                Subfield(code="g", value="1"),
-            ],
-        )
-    )
+    bib.add_field(stub_item)
+    bib.add_field(stub_order)
+    bib.add_field(stub_invoice)
     return bib
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def stub_record_with_dupes(stub_record):
     dupe_record = stub_record
     dupe_record.add_field(

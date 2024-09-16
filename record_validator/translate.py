@@ -58,15 +58,16 @@ class MarcError:
 
     def _get_msg(self) -> Optional[str]:
         msg = self.original_error.get("msg")
-        if self.original_error["type"] == "order_item_mismatch" and msg is not None:
-            return f"Invalid combination of item type, order location and item location: {eval(msg)}"  # noqa: 501
-        else:
-            return msg
+        return msg
 
     def _get_input(self):
         input = self.original_error.get("input")
         if self.original_error["type"] == "order_item_mismatch":
-            return eval(self.original_error["msg"])
+            return (
+                input["item_type"],
+                input["item_location"],
+                input["order_location"],
+            )
         else:
             return input
 
@@ -85,14 +86,23 @@ class MarcError:
         out_loc = []
         if self.type == "order_item_mismatch":
             return ("960$t", "949_$l", "949_$t")
-
-        for i in self.loc:
-            if i == "fields":
-                continue
+        if "949" in self.loc:
+            locs = [i for i in self.loc if i != "fields" and i != "subfields"]
+        else:
+            locs = [
+                i
+                for i in self.loc
+                if i != "fields" and i != "subfields" and isinstance(i, str)
+            ]
+        for i in locs:
+            if isinstance(i, int):
+                out_loc.append(f"_{i + 1}_")
+            elif "subfields." in i:
+                out_loc.append(f"${i.split("subfields.")[1]}")
             elif i in MarcEncoding.__members__:
                 out_loc.append(MarcEncoding[str(i)].value)
-            elif isinstance(i, int):
-                out_loc.append(f"_{i + 1}_")
+            elif len(i) == 1 and not i.isdigit():
+                out_loc.append(f"${i}")
             else:
                 out_loc.append(i)
         return "".join(out_loc)

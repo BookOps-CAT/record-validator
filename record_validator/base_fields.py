@@ -1,7 +1,7 @@
 from typing import Annotated, Any, Dict, List, Literal, Union
 from pymarc import Field as MarcField
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
-from record_validator.parsers import parse_input
+
 
 SUBFIELD_MAPPING = {
     "call_no": "h",
@@ -37,6 +37,38 @@ def get_alias(field_name: str) -> str:
         return field_name
     else:
         return f"subfields.{SUBFIELD_MAPPING[field_name]}"
+
+
+def parse_input(input: Union[MarcField, Dict[str, Any]], model: Any) -> Dict[str, Any]:
+    if not isinstance(input, (MarcField, dict)):
+        return input
+    if isinstance(input, dict):
+        tag = next(iter(input)) if "tag" not in input else input["tag"]
+        data = input[tag] if "tag" not in input else input
+        if "subfields" not in data and "ind1" not in data and "ind2" not in data:
+            return input
+        ind1, ind2, subfields = data["ind1"], data["ind2"], data["subfields"]
+    else:
+        tag = input.tag
+        ind1 = input.indicator1
+        ind2 = input.indicator2
+        subfields = [{i[0]: i[1]} for i in input.subfields]
+
+    if not isinstance(subfields, list) or not all(
+        isinstance(i, dict) for i in subfields
+    ):
+        return {"tag": tag, "ind1": ind1, "ind2": ind2, "subfields": subfields}
+    sorted_subfields = sorted([i for i in subfields], key=lambda x: list(x.keys())[0])
+    out = {"tag": tag, "ind1": ind1, "ind2": ind2, "subfields": sorted_subfields}
+    extra_fields = [i for i in model.model_fields if i not in out.keys()]
+    for field in extra_fields:
+        alias = model.model_config["alias_generator"](field)
+        nested_key = alias.split("subfields.")[1]
+        for subfield in sorted_subfields:
+            if nested_key in subfield:
+                out.update({field: subfield[nested_key]})
+                continue
+    return out
 
 
 class BaseControlField(BaseModel):
@@ -97,7 +129,3 @@ class BaseDataField(BaseModel):
                 "subfields": self.subfields,
             }
         }
-
-
-# class BaseOrderItem(BaseModel):
-#     order_item_combination: Dict[str, Union[str, None]]

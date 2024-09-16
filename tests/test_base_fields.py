@@ -5,7 +5,9 @@ from record_validator.base_fields import (
     BaseControlField,
     BaseDataField,
     get_alias,
+    parse_input,
 )
+from record_validator.field_models import BibCallNo, InvoiceField
 
 
 @pytest.mark.parametrize(
@@ -44,6 +46,42 @@ from record_validator.base_fields import (
 def test_get_alias(field_name, mapping):
     alias = get_alias(field_name)
     assert alias == mapping
+
+
+def test_parse_input_marc(stub_record):
+    field = stub_record.get("852")
+    parsed_data = parse_input(field, BibCallNo)
+    assert parsed_data["call_no"] == "ReCAP 23-100000"
+    assert parsed_data["ind1"] == "8"
+    assert parsed_data["ind2"] == " "
+    assert parsed_data["tag"] == "852"
+    assert parsed_data["subfields"] == [{"h": "ReCAP 23-100000"}]
+
+
+def test_parse_input_dict(stub_record):
+    stub_record_dict = stub_record.as_dict()
+    invoice_field = stub_record_dict["fields"][-1]
+    parsed_data = parse_input(invoice_field, InvoiceField)
+    assert parsed_data["ind1"] == " "
+    assert parsed_data["ind2"] == " "
+    assert parsed_data["tag"] == "980"
+    assert len(parsed_data["subfields"]) == 7
+    assert parsed_data["invoice_date"] == "240101"
+    assert parsed_data["invoice_price"] == "100"
+    assert parsed_data["invoice_tax"] == "000"
+    assert parsed_data["invoice_shipping"] == "100"
+    assert parsed_data["invoice_net_price"] == "200"
+    assert parsed_data["invoice_number"] == "123456"
+    assert parsed_data["invoice_copies"] == "1"
+
+
+@pytest.mark.parametrize(
+    "data",
+    [[], (960, "", ""), "960"],
+)
+def test_parse_input_errors(data):
+    parsed_data = parse_input(data, InvoiceField)
+    assert parsed_data == data
 
 
 def test_BaseControlField_valid():

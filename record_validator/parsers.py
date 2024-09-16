@@ -1,9 +1,43 @@
-from itertools import product
-from typing import Any, Dict, List, Union
+from typing import Annotated, Any, Dict, List, Union
 from pymarc import Field as MarcField
+from pydantic import Discriminator, Tag, TypeAdapter
+from pydantic_core import PydanticCustomError, ValidationError, InitErrorDetails
+from record_validator.field_models import (
+    BibCallNo,
+    BibVendorCode,
+    ControlField,
+    InvoiceField,
+    ItemField,
+    LCClass,
+    LibraryField,
+    OrderField,
+    OtherDataField,
+)
+
 
 CONTROL_FIELDS = ["001", "003", "005", "006", "007", "008"]
 REQUIRED_FIELDS = ["852", "901", "050", "910", "960", "980", "949"]
+VALID_ORDER_ITEMS = [
+    {"order_location": "MAB", "item_location": "rcmb2", "item_type": "2"},
+    {"order_location": "MAS", "item_location": "rcmb2", "item_type": "2"},
+    {"order_location": "MAF", "item_location": "rcmf2", "item_type": "55"},
+    {"order_location": "MAF", "item_location": "rcmf2", "item_type": None},
+    {"order_location": "MAG", "item_location": "rcmg2", "item_type": "55"},
+    {"order_location": "MAG", "item_location": "rcmg2", "item_type": None},
+    {"order_location": "MAL", "item_location": "rc2ma", "item_type": "55"},
+    {"order_location": "MAL", "item_location": None, "item_type": "55"},
+    {"order_location": "MAL", "item_location": "rc2ma", "item_type": None},
+    {"order_location": "MAL", "item_location": None, "item_type": None},
+    {"order_location": "MAP", "item_location": "rcmp2", "item_type": "2"},
+    {"order_location": "PAH", "item_location": "rcph2", "item_type": "55"},
+    {"order_location": "PAH", "item_location": "rcph2", "item_type": None},
+    {"order_location": "PAM", "item_location": "rcpm2", "item_type": "55"},
+    {"order_location": "PAM", "item_location": "rcpm2", "item_type": None},
+    {"order_location": "PAT", "item_location": "rcpt2", "item_type": "55"},
+    {"order_location": "PAT", "item_location": "rcpt2", "item_type": None},
+    {"order_location": "SC", "item_location": "rc2cf", "item_type": "55"},
+    {"order_location": "SC", "item_location": "rc2cf", "item_type": None},
+]
 
 
 def get_field_tag(field: Union[MarcField, dict]) -> str:
@@ -26,7 +60,7 @@ def get_missing_field_list(fields: list) -> list:
     return [tag for tag in REQUIRED_FIELDS if tag not in all_fields]
 
 
-def order_item_from_field(
+def get_order_item_from_field(
     input: List[Union[MarcField, Dict[str, Any]]]
 ) -> List[Dict[str, Union[str, None]]]:
     order_locations = []
@@ -37,57 +71,27 @@ def order_item_from_field(
             isinstance(field, dict)
             and ("960" in field or ("tag" in field and field["tag"] == "960"))
         ):
-            order_locations.append(subfield_from_code(field=field, code="t", tag="960"))
+            order_locations.append(
+                get_subfield_from_code(field=field, code="t", tag="960")
+            )
         elif (isinstance(field, MarcField) and field.tag == "949") or (
             isinstance(field, dict)
             and ("949" in field or ("tag" in field and field["tag"] == "949"))
         ):
-            item_locations.append(subfield_from_code(field=field, code="l", tag="949"))
-            item_types.append(subfield_from_code(field=field, code="t", tag="949"))
-        else:
-            continue
+            item_locations.append(
+                get_subfield_from_code(field=field, code="l", tag="949")
+            )
+            item_types.append(get_subfield_from_code(field=field, code="t", tag="949"))
     order_count = len(order_locations)
     assert order_count == 1, f"Expected 1 order location, got {order_count}"
-    combos = set(product(order_locations, item_locations, item_types))
     result = [
-        {"order_location": ol, "item_location": il, "item_type": it}
-        for ol, il, it in combos
+        {"order_location": order_locations[0], "item_location": il, "item_type": it}
+        for il, it in zip(item_locations, item_types)
     ]
     return result
 
 
-def parse_input(input: Union[MarcField, Dict[str, Any]], model: Any) -> Dict[str, Any]:
-    if not isinstance(input, (MarcField, dict)):
-        return input
-    elif isinstance(input, dict) and "tag" not in input or isinstance(input, MarcField):
-        tag = input.tag if isinstance(input, MarcField) else next(iter(input))
-        ind1 = input.indicator1 if isinstance(input, MarcField) else input[tag]["ind1"]
-        ind2 = input.indicator2 if isinstance(input, MarcField) else input[tag]["ind2"]
-        if isinstance(input, MarcField):
-            subfields = [{i[0]: i[1]} for i in input.subfields]
-        else:
-            subfields = input[tag]["subfields"]
-    else:
-        tag, ind1, ind2 = input["tag"], input["ind1"], input["ind2"]
-        subfields = input["subfields"]
-    if not isinstance(subfields, list) or not all(
-        isinstance(i, dict) for i in subfields
-    ):
-        return {"tag": tag, "ind1": ind1, "ind2": ind2, "subfields": subfields}
-    sorted_subfields = sorted([i for i in subfields], key=lambda x: list(x.keys())[0])
-    out = {"tag": tag, "ind1": ind1, "ind2": ind2, "subfields": sorted_subfields}
-    extra_fields = [i for i in model.model_fields if i not in out.keys()]
-    for field in extra_fields:
-        alias = model.model_config["alias_generator"](field)
-        nested_key = alias.split("subfields.")[1]
-        for subfield in sorted_subfields:
-            if nested_key in subfield:
-                out.update({field: subfield[nested_key]})
-                continue
-    return out
-
-
-def subfield_from_code(
+def get_subfield_from_code(
     field: Union[MarcField, dict],
     tag: str,
     code: str,
@@ -105,3 +109,79 @@ def subfield_from_code(
         return None
     assert len(subfields) == 1
     return subfields[0]
+
+
+def validate_fields(self: list) -> list:
+    validation_errors = []
+    field_validation_errors = validate_field_values(self)
+    validation_errors.extend(field_validation_errors)
+    missing_fields = get_missing_field_list(self)
+    for tag in missing_fields:
+        validation_errors.append(
+            InitErrorDetails(
+                type=PydanticCustomError(
+                    "missing_required_field", f"Field required: {tag}"
+                ),
+                input=tag,
+            )
+        )
+    if "949" in missing_fields or "960" in missing_fields:
+        pass
+    elif len(field_validation_errors) > 0 and any(
+        loc in [i["loc"][-1] for i in field_validation_errors]
+        for loc in ["item_location", "item_type", "order_location"]
+    ):
+        pass
+    else:
+        order_item_errors = validate_order_item_data(self)
+        validation_errors.extend(order_item_errors)
+    if len(validation_errors) > 0:
+        raise ValidationError.from_exception_data(
+            title=self.__class__.__name__, line_errors=validation_errors
+        )
+    else:
+        return self
+
+
+def validate_field_values(fields: list) -> list:
+    validation_errors = []
+    FieldAdapter: TypeAdapter = TypeAdapter(
+        Annotated[
+            Union[
+                Annotated[BibCallNo, Tag("852")],
+                Annotated[BibVendorCode, Tag("901")],
+                Annotated[InvoiceField, Tag("980")],
+                Annotated[ItemField, Tag("949")],
+                Annotated[LCClass, Tag("050")],
+                Annotated[LibraryField, Tag("910")],
+                Annotated[OrderField, Tag("960")],
+                Annotated[OtherDataField, Tag("data_field")],
+                Annotated[ControlField, Tag("control_field")],
+            ],
+            Discriminator(get_field_tag),
+        ]
+    )
+    for field in fields:
+        try:
+            FieldAdapter.validate_python(field, from_attributes=True)
+        except ValidationError as e:
+            validation_errors.extend(e.errors())
+    return validation_errors
+
+
+def validate_order_item_data(self: List[Union[MarcField, Dict[str, Any]]]) -> list:
+    error_msg = "Invalid combination of item_type, order_location and item_location"
+    validation_errors = []
+    order_item_list = get_order_item_from_field(self)
+    for order_item in order_item_list:
+        if order_item not in VALID_ORDER_ITEMS:
+            validation_errors.append(
+                InitErrorDetails(
+                    type=PydanticCustomError(
+                        "order_item_mismatch",
+                        f"{error_msg}: {order_item}",
+                    ),
+                    input=order_item,
+                )
+            )
+    return validation_errors
