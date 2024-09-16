@@ -98,7 +98,7 @@ class MarcError:
             if isinstance(i, int):
                 out_loc.append(f"_{i + 1}_")
             elif "subfields." in i:
-                out_loc.append(f"${i.split("subfields.")[1]}")
+                out_loc.append(f"${i.split('subfields.')[1]}")
             elif i in MarcEncoding.__members__:
                 out_loc.append(MarcEncoding[str(i)].value)
             elif len(i) == 1 and not i.isdigit():
