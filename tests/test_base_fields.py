@@ -7,7 +7,7 @@ from record_validator.base_fields import (
     get_alias,
     parse_input,
 )
-from record_validator.field_models import BibCallNo, InvoiceField
+from record_validator.field_models import BibCallNo
 
 
 @pytest.mark.parametrize(
@@ -50,37 +50,43 @@ def test_get_alias(field_name, mapping):
 
 def test_parse_input_marc(stub_record):
     field = stub_record.get("852")
-    parsed_data = parse_input(field, BibCallNo)
-    assert parsed_data["call_no"] == "ReCAP 23-100000"
-    assert parsed_data["ind1"] == "8"
-    assert parsed_data["ind2"] == " "
-    assert parsed_data["tag"] == "852"
-    assert parsed_data["subfields"] == [{"h": "ReCAP 23-100000"}]
+    parsed_field = parse_input(field, BaseDataField)
+    parsed_bib_call_no = parse_input(field, BibCallNo)
+    assert parsed_field["tag"] == "852"
+    assert parsed_field["ind1"] == "8"
+    assert parsed_field["ind2"] == " "
+    assert parsed_field["subfields"] == [{"h": "ReCAP 23-100000"}]
+    assert parsed_bib_call_no["call_no"] == "ReCAP 23-100000"
+    assert parsed_field["tag"] == parsed_bib_call_no["tag"]
+    assert parsed_field["ind1"] == parsed_bib_call_no["ind1"]
+    assert parsed_field["ind2"] == parsed_bib_call_no["ind2"]
+    assert parsed_field["subfields"] == parsed_bib_call_no["subfields"]
 
 
 def test_parse_input_dict(stub_record):
     stub_record_dict = stub_record.as_dict()
-    invoice_field = stub_record_dict["fields"][-1]
-    parsed_data = parse_input(invoice_field, InvoiceField)
-    assert parsed_data["ind1"] == " "
-    assert parsed_data["ind2"] == " "
-    assert parsed_data["tag"] == "980"
-    assert len(parsed_data["subfields"]) == 7
-    assert parsed_data["invoice_date"] == "240101"
-    assert parsed_data["invoice_price"] == "100"
-    assert parsed_data["invoice_tax"] == "000"
-    assert parsed_data["invoice_shipping"] == "100"
-    assert parsed_data["invoice_net_price"] == "200"
-    assert parsed_data["invoice_number"] == "123456"
-    assert parsed_data["invoice_copies"] == "1"
+    field = stub_record_dict["fields"][-1]
+    parsed_field = parse_input(field, BaseDataField)
+    assert parsed_field["tag"] == "980"
+    assert parsed_field["ind1"] == " "
+    assert parsed_field["ind2"] == " "
+    assert parsed_field["subfields"] == [
+        {"a": "240101"},
+        {"b": "100"},
+        {"c": "100"},
+        {"d": "000"},
+        {"e": "200"},
+        {"f": "123456"},
+        {"g": "1"},
+    ]
 
 
 @pytest.mark.parametrize(
     "data",
-    [[], (960, "", ""), "960"],
+    [[], (960, "", ""), "960", {"960": "foo"}],
 )
 def test_parse_input_errors(data):
-    parsed_data = parse_input(data, InvoiceField)
+    parsed_data = parse_input(data, BaseDataField)
     assert parsed_data == data
 
 
