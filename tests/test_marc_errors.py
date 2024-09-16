@@ -2,7 +2,7 @@ import pytest
 from pymarc import Subfield
 from pymarc import Field as MarcField
 from pydantic import ValidationError
-from record_validator.translate import MarcError, MarcValidationError
+from record_validator.marc_errors import MarcError, MarcValidationError
 from record_validator.marc_models import MonographRecord
 
 
