@@ -45,7 +45,7 @@ def parse_input(input: Union[MarcField, Dict[str, Any]], model: Any) -> Dict[str
     if isinstance(input, dict):
         tag = next(iter(input)) if "tag" not in input else input["tag"]
         data = input[tag] if "tag" not in input else input
-        if "subfields" not in data and "ind1" not in data and "ind2" not in data:
+        if any(loc not in data for loc in ["subfields", "ind1", "ind2"]):
             return input
         ind1, ind2, subfields = data["ind1"], data["ind2"], data["subfields"]
     else:
