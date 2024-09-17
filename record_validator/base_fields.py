@@ -74,7 +74,7 @@ def parse_input(input: Union[MarcField, Dict[str, Any]], model: Any) -> Dict[str
 class BaseControlField(BaseModel):
     model_config = ConfigDict(populate_by_name=True, loc_by_alias=False, extra="forbid")
 
-    tag: Annotated[str, Field(pattern=r"^00[0-9]$")]
+    tag: Annotated[str, Field(pattern=r"00[1-9]")]
     value: str
 
     @model_validator(mode="before")
@@ -105,7 +105,7 @@ class BaseDataField(BaseModel):
         populate_by_name=True, loc_by_alias=False, alias_generator=get_alias
     )
 
-    tag: Annotated[str, Field(max_length=3, min_length=3, exclude=True)]
+    tag: Annotated[str, Field(pattern=r"0[1-9]\d|[1-9]\d\d", exclude=True)]
     ind1: Union[Literal["", " "], Annotated[str, Field(pattern=r"^\d$")]]
     ind2: Union[Literal["", " "], Annotated[str, Field(pattern=r"^\d$")]]
     subfields: List[Dict[str, str]]

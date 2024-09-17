@@ -10,6 +10,7 @@ from record_validator.field_models import (
     LCClass,
     LibraryField,
     OrderField,
+    OtherDataField,
 )
 
 
@@ -278,6 +279,17 @@ def test_ControlField_invalid_code_value(field_value):
     with pytest.raises(ValidationError) as e:
         ControlField(tag="001", value=field_value)
     assert e.value.errors()[0]["type"] == "string_type"
+    assert len(e.value.errors()) == 1
+
+
+@pytest.mark.parametrize(
+    "tag",
+    ["020", "050", "650", "700", "852"],
+)
+def test_ControlField_invalid_code_literal(tag):
+    with pytest.raises(ValidationError) as e:
+        ControlField(tag=tag, value="foo")
+    assert e.value.errors()[0]["type"] == "literal_error"
     assert len(e.value.errors()) == 1
 
 
@@ -1314,3 +1326,58 @@ def test_OrderField_invalid_fund(fund_field):
     assert e.value.errors()[0]["type"] == "string_type"
     assert len(e.value.errors()) == 2
     assert sorted(error_locs) == sorted([("subfields", 2, "u"), ("order_fund",)])
+
+
+@pytest.mark.parametrize(
+    "tag",
+    [
+        "020",
+        "100",
+        "300",
+        "336",
+        "490",
+        "500",
+        "600",
+        "650",
+        "655",
+        "710",
+        "856",
+        "880",
+        "990",
+        "994",
+    ],
+)
+def test_OtherDataField_valid_tag_literal(tag):
+    model = OtherDataField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
+    model.model_dump(by_alias=True) == {
+        tag: {
+            "ind1": " ",
+            "ind2": " ",
+            "subfields": [{"a": "foo"}],
+        }
+    }
+
+
+@pytest.mark.parametrize(
+    "tag",
+    [
+        "001",
+        "003",
+        "005",
+        "006",
+        "008",
+        "050",
+        "852",
+        "901",
+        "910",
+        "949",
+        "960",
+        "980",
+    ],
+)
+def test_OtherDataField_invalid_tag_literal(tag):
+    with pytest.raises(ValidationError) as e:
+        OtherDataField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
+    error_types = [error["type"] for error in e.value.errors()]
+    assert len(e.value.errors()) == 1
+    assert error_types == ["string_pattern_mismatch"]
