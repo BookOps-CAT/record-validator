@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Tuple, Union
+from typing import Any, Tuple, Union
 from pydantic_core import ErrorDetails
 
 
@@ -48,13 +48,12 @@ class MarcError:
 
     def __init__(self, error: ErrorDetails):
         self.original_error = error
-        self.type = error.get("type")
-        self.input = self._get_input()
-        self.loc = self._get_loc()
-        self.msg = error.get("msg", None)
-        self.ctx = error.get("ctx", None)
-        self.url = error.get("url", None)
-        self.loc_marc = self._loc2marc()
+        self.type: str = error["type"]
+        self.ctx: Union[dict[str, Any], None] = error.get("ctx", None)
+        self.input: Union[str, tuple] = self._get_input()
+        self.loc: Union[str, tuple] = self._get_loc()
+        self.loc_marc: Union[str, tuple] = self._loc2marc()
+        self.msg: Union[str, None] = error.get("msg", None)
 
     def _get_input(self):
         if self.type == "order_item_mismatch":

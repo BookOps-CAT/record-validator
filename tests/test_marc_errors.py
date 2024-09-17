@@ -143,7 +143,6 @@ def test_MarcError_order_item_mismatch(stub_record):
     )
     assert sorted(error.input) == sorted(("MAB", "rcmf2", "55"))
     assert error.ctx is None
-    assert error.url is None
     assert error.type == "order_item_mismatch"
     assert (
         "Invalid combination of item_type, order_location and item_location:"
