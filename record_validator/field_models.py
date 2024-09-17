@@ -201,9 +201,9 @@ class OtherDataField(BaseDataField):
     tag: Annotated[
         str,
         Field(
-            pattern=r"^0[1-9]\d$|^[1-7]\d\d$|^(80[0-9])$|^(8[1-4][0-9])$|^(85[0-1])$|^(85[3-9])$|^(8[6-9][0-9])$|^(90[2-9])$|^(9[1-4][0-9])$|^(95[0-8])$|^(9[6-7][0-9])$|^(98[1-9])$",  # noqa 501
+            pattern=r"0[1-9]{2}|0[1-46-9]0|^[1-7]\d\d|8[0-46-9]\d|85[013-9]|90[02-9]|9[168][1-9]|94[0-8]|9[23579]\d",  # noqa: E501
         ),
     ]
-    ind1: Union[Literal[""], Annotated[str, Field(max_length=1, min_length=1)]]
-    ind2: Union[Literal[""], Annotated[str, Field(max_length=1, min_length=1)]]
+    ind1: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
+    ind2: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
     subfields: List[Any]

@@ -138,6 +138,22 @@ def test_BaseControlField_invalid_value():
     assert e.value.errors()[0]["type"] == "string_type"
 
 
+def test_BaseControlField_invalid_tag_literal():
+    with pytest.raises(ValidationError) as e:
+        BaseControlField(tag="010", ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
+    error_types = [error["type"] for error in e.value.errors()]
+    assert len(e.value.errors()) == 5
+    assert sorted(error_types) == sorted(
+        [
+            "string_pattern_mismatch",
+            "extra_forbidden",
+            "extra_forbidden",
+            "extra_forbidden",
+            "missing",
+        ]
+    )
+
+
 @pytest.mark.parametrize(
     "input",
     [
@@ -204,7 +220,7 @@ def test_BaseDataField_invalid_tag():
         BaseDataField(tag="0000", ind1=" ", ind2=" ", subfields=[{"a": "F00"}])
     assert len(e.value.errors()) == 1
     assert e.value.errors()[0]["loc"] == ("tag",)
-    assert e.value.errors()[0]["type"] == "string_too_long"
+    assert e.value.errors()[0]["type"] == "string_pattern_mismatch"
 
 
 @pytest.mark.parametrize(
