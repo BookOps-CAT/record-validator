@@ -122,7 +122,13 @@ class MarcValidationError:
         invalid_fields = [
             i
             for i in self.errors
-            if i.type in ["string_pattern_mismatch", "literal_error"]
+            if i.type
+            not in [
+                "missing",
+                "missing_before_validation",
+                "extra_forbidden",
+                "order_item_mismatch",
+            ]
         ]
 
         invalid_field_list = []
