@@ -3,7 +3,8 @@
 from typing import Annotated, Dict, List, Union
 from pydantic import BaseModel, Field, ConfigDict
 from pymarc import Field as MarcField
-from pydantic.functional_validators import AfterValidator
+from pymarc import Leader
+from pydantic.functional_validators import AfterValidator, field_validator
 from record_validator.parsers import validate_fields
 
 
@@ -32,17 +33,11 @@ class MonographRecord(BaseModel):
         ],
         AfterValidator(validate_fields),
     ]
-    # material_type: Annotated[
-    #     Union[
-    #         Literal["monograph"],
-    #         Literal[
-    #             "catalogue_raissonne",
-    #             "dance",
-    #             "multipart",
-    #             "pamphlet",
-    #             "non-standard_binding_packaging",
-    #         ],
-    #     ],
-    #     Field(exclude=True),
-    #     BeforeValidator(get_material_type),
-    # ]
+
+    @field_validator("leader", mode="before")
+    @classmethod
+    def validate_leader(cls, leader: Union[str, Leader]) -> str:
+        if isinstance(leader, str):
+            return leader
+        else:
+            return str(leader)
