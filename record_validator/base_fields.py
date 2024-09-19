@@ -79,21 +79,27 @@ class BaseControlField(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_control_field_input(cls, input: Any) -> "BaseControlField":
-        if isinstance(input, MarcField):
+    def parse_control_field_input(
+        cls, input: Any
+    ) -> Union[Dict[str, Any], "BaseControlField"]:
+        if not isinstance(input, (MarcField, dict)) or (
+            isinstance(input, dict)
+            and next(iter(input)) not in ["001", "003", "005", "006", "007", "008"]
+        ):
+            return input
+        elif isinstance(input, MarcField):
             return cls(tag=input.tag, value=input.value())
-        elif isinstance(input, dict) and next(iter(input)) in [
-            "001",
-            "003",
-            "005",
-            "006",
-            "007",
-            "008",
-        ]:
+        elif isinstance(input, dict) and all(
+            [isinstance(i, str) for i in input.values()]
+        ):
             ((tag, value),) = input.items()
             return cls(tag=tag, value=value)
         else:
-            return input
+            ((tag, value),) = input.items()
+            out = {"tag": tag, "value": value}
+            if isinstance(value, dict):
+                out.update({field: value for field, value in value.items()})
+            return cls(**out)
 
     @model_serializer(mode="plain")
     def serialize_control_field(self) -> Dict[str, str]:

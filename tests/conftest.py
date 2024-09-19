@@ -80,7 +80,7 @@ def stub_invoice():
 @pytest.fixture
 def stub_record(stub_item, stub_order, stub_invoice):
     bib = Record()
-    bib.leader = "00820cam a22001935i 4500"
+    bib.leader = "00454cam a22001575i 4500"
     bib.add_field(MarcField(tag="008", data="190306s2017    ht a   j      000 1 hat d"))
     bib.add_field(MarcField(tag="001", data="on1381158740"))
     bib.add_field(

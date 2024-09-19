@@ -5,7 +5,12 @@ from pydantic_core import PydanticCustomError, ValidationError, InitErrorDetails
 from record_validator.field_models import (
     BibCallNo,
     BibVendorCode,
-    ControlField,
+    ControlField001,
+    ControlField003,
+    ControlField005,
+    ControlField006,
+    ControlField007,
+    ControlField008,
     InvoiceField,
     ItemField,
     LCClass,
@@ -40,11 +45,55 @@ VALID_ORDER_ITEMS = [
 ]
 
 
+def get_examples_from_schema(field: tuple) -> Union[List[str], None]:
+    if len(field) == 2:
+        model = field[0]
+        model_field = field[1]
+        by_alias = False
+    elif field[0] == "fields" and field[2] == "subfields":
+        model = field[1]
+        model_field = f"subfields.{field[4]}"
+        by_alias = True
+    else:
+        model = field[1]
+        model_field = field[2]
+        by_alias = False
+
+    match model:
+        case "001":
+            schema = ControlField001.model_json_schema(by_alias=by_alias)
+        case "003":
+            schema = ControlField003.model_json_schema(by_alias=by_alias)
+        case "005":
+            schema = ControlField005.model_json_schema(by_alias=by_alias)
+        case "006":
+            schema = ControlField006.model_json_schema(by_alias=by_alias)
+        case "007":
+            schema = ControlField007.model_json_schema(by_alias=by_alias)
+        case "008":
+            schema = ControlField008.model_json_schema(by_alias=by_alias)
+        case "050":
+            schema = LCClass.model_json_schema(by_alias=by_alias)
+        case "852":
+            schema = BibCallNo.model_json_schema(by_alias=by_alias)
+        case "980":
+            schema = InvoiceField.model_json_schema(by_alias=by_alias)
+        case "949":
+            schema = ItemField.model_json_schema(by_alias=by_alias)
+
+        case "960":
+            schema = OrderField.model_json_schema(by_alias=by_alias)
+
+        case _:
+            return None
+    return schema["properties"][model_field]["examples"]
+
+
 def get_field_tag(field: Union[MarcField, dict]) -> str:
     tag = field.tag if isinstance(field, MarcField) else list(field.keys())[0]
-    if tag in CONTROL_FIELDS:
-        return "control_field"
-    elif tag in REQUIRED_FIELDS:
+    # if tag in CONTROL_FIELDS:
+    #     return "control_field"
+    if tag in REQUIRED_FIELDS or tag in CONTROL_FIELDS:
         return tag
     else:
         return "data_field"
@@ -156,7 +205,12 @@ def validate_field_values(fields: list) -> list:
                 Annotated[LibraryField, Tag("910")],
                 Annotated[OrderField, Tag("960")],
                 Annotated[OtherDataField, Tag("data_field")],
-                Annotated[ControlField, Tag("control_field")],
+                Annotated[ControlField001, Tag("001")],
+                Annotated[ControlField003, Tag("003")],
+                Annotated[ControlField005, Tag("005")],
+                Annotated[ControlField006, Tag("006")],
+                Annotated[ControlField007, Tag("007")],
+                Annotated[ControlField008, Tag("008")],
             ],
             Discriminator(get_field_tag),
         ]
