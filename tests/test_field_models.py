@@ -4,7 +4,12 @@ from pymarc import Field as MarcField
 from record_validator.field_models import (
     BibCallNo,
     BibVendorCode,
-    ControlField,
+    ControlField001,
+    ControlField003,
+    ControlField005,
+    ControlField006,
+    ControlField007,
+    ControlField008,
     InvoiceField,
     ItemField,
     LCClass,
@@ -232,38 +237,17 @@ def test_BibVendorCode_invalid_code_value(field_value):
     assert len(e.value.errors()) == 1
 
 
-@pytest.mark.parametrize(
-    "tag, value",
-    [
-        ("001", "ocn123456789"),
-        ("003", "foo"),
-        ("005", "20240413112604.0"),
-        ("006", "bar"),
-        ("007", "baz"),
-        ("008", "190306s2017    ht a   j      000 1 hat d"),
-    ],
-)
-def test_ControlField_valid(tag, value):
-    model = ControlField(tag=tag, value=value)
-    assert model.model_dump(by_alias=True) == {tag: value}
+def test_ControlField001_valid():
+    model = ControlField001(tag="001", value="ocn123456789")
+    assert model.model_dump(by_alias=True) == {"001": "ocn123456789"}
 
 
-def test_ControlField_valid_from_field(stub_record):
-    field = stub_record.get_fields("008")[0]
-    assert isinstance(field, MarcField)
-    model = ControlField.model_validate(field, from_attributes=True)
+def test_ControlField001_valid_from_field():
+    field = MarcField(tag="001", data="ocn123456789")
+    model = ControlField001.model_validate(field, from_attributes=True)
     assert model.model_dump(by_alias=True) == {
-        "008": "190306s2017    ht a   j      000 1 hat d",
+        "001": "ocn123456789",
     }
-
-
-@pytest.mark.parametrize("tag", ["foo", "bar", "baz"])
-def test_ControlField_invalid_code_type(tag):
-    with pytest.raises(ValidationError) as e:
-        ControlField(tag=tag, value="foo")
-    assert e.value.errors()[0]["type"] == "literal_error"
-    assert e.value.errors()[0]["loc"] == ("tag",)
-    assert len(e.value.errors()) == 1
 
 
 @pytest.mark.parametrize(
@@ -275,22 +259,168 @@ def test_ControlField_invalid_code_type(tag):
         [],
     ],
 )
-def test_ControlField_invalid_code_value(field_value):
+def test_ControlField001_invalid_code_value(field_value):
     with pytest.raises(ValidationError) as e:
-        ControlField(tag="001", value=field_value)
+        ControlField001(tag="001", value=field_value)
     assert e.value.errors()[0]["type"] == "string_type"
+    assert e.value.errors()[0]["loc"] == ("value",)
     assert len(e.value.errors()) == 1
+
+
+def test_ControlField003_valid():
+    model = ControlField003(tag="003", value="OCoLC")
+    assert model.model_dump(by_alias=True) == {"003": "OCoLC"}
+
+
+def test_ControlField003_valid_from_field():
+    field = MarcField(tag="003", data="OCoLC")
+    model = ControlField003.model_validate(field, from_attributes=True)
+    assert model.model_dump(by_alias=True) == {
+        "003": "OCoLC",
+    }
 
 
 @pytest.mark.parametrize(
-    "tag",
-    ["020", "050", "650", "700", "852"],
+    "field_value",
+    [
+        1,
+        1.0,
+        None,
+        [],
+    ],
 )
-def test_ControlField_invalid_code_literal(tag):
+def test_ControlField003_invalid_code_value(field_value):
     with pytest.raises(ValidationError) as e:
-        ControlField(tag=tag, value="foo")
-    assert e.value.errors()[0]["type"] == "literal_error"
+        ControlField003(tag="003", value=field_value)
+    assert e.value.errors()[0]["type"] == "string_type"
+    assert e.value.errors()[0]["loc"] == ("value",)
     assert len(e.value.errors()) == 1
+
+
+def test_ControlField005_valid():
+    model = ControlField005(tag="005", value="20241111111111.0")
+    assert model.model_dump(by_alias=True) == {"005": "20241111111111.0"}
+
+
+def test_ControlField005_valid_from_field():
+    field = MarcField(tag="005", data="20241111111111.0")
+    model = ControlField005.model_validate(field, from_attributes=True)
+    assert model.model_dump(by_alias=True) == {"005": "20241111111111.0"}
+
+
+@pytest.mark.parametrize(
+    "field_value",
+    [
+        1,
+        1.0,
+        None,
+        [],
+    ],
+)
+def test_ControlField005_invalid_code_value(field_value):
+    with pytest.raises(ValidationError) as e:
+        ControlField005(tag="005", value=field_value)
+    assert e.value.errors()[0]["type"] == "string_type"
+    assert e.value.errors()[0]["loc"] == ("value",)
+    assert len(e.value.errors()) == 1
+
+
+def test_ControlField006_valid():
+    model = ControlField006(tag="006", value="b     s")
+    assert model.model_dump(by_alias=True) == {"006": "b     s"}
+
+
+def test_ControlField006_valid_from_field():
+    field = MarcField(tag="006", data="b     s")
+    model = ControlField006.model_validate(field, from_attributes=True)
+    assert model.model_dump(by_alias=True) == {"006": "b     s"}
+
+
+@pytest.mark.parametrize(
+    "field_value",
+    [
+        1,
+        1.0,
+        None,
+        [],
+    ],
+)
+def test_ControlField006_invalid_code_value(field_value):
+    with pytest.raises(ValidationError) as e:
+        ControlField006(tag="006", value=field_value)
+    assert e.value.errors()[0]["type"] == "string_type"
+    assert e.value.errors()[0]["loc"] == ("value",)
+    assert len(e.value.errors()) == 1
+
+
+def test_ControlField007_valid():
+    model = ControlField007(tag="007", value="cr |||||||||||")
+    assert model.model_dump(by_alias=True) == {"007": "cr |||||||||||"}
+
+
+def test_ControlField007_valid_from_field():
+    field = MarcField(tag="007", data="cr |||||||||||")
+    model = ControlField007.model_validate(field, from_attributes=True)
+    assert model.model_dump(by_alias=True) == {"007": "cr |||||||||||"}
+
+
+@pytest.mark.parametrize(
+    "field_value",
+    [
+        1,
+        1.0,
+        None,
+        [],
+    ],
+)
+def test_ControlField007_invalid_code_value(field_value):
+    with pytest.raises(ValidationError) as e:
+        ControlField007(tag="007", value=field_value)
+    assert e.value.errors()[0]["type"] == "string_type"
+    assert e.value.errors()[0]["loc"] == ("value",)
+    assert len(e.value.errors()) == 1
+
+
+def test_ControlField008_valid():
+    model = ControlField008(tag="008", value="210505s2021    nyu           000 0 eng d")
+    assert model.model_dump(by_alias=True) == {
+        "008": "210505s2021    nyu           000 0 eng d"
+    }
+
+
+def test_ControlField008_valid_from_field():
+    field = MarcField(tag="008", data="210505s2021    nyu           000 0 eng d")
+    model = ControlField008.model_validate(field, from_attributes=True)
+    assert model.model_dump(by_alias=True) == {
+        "008": "210505s2021    nyu           000 0 eng d"
+    }
+
+
+@pytest.mark.parametrize(
+    "field_value",
+    [
+        1,
+        1.0,
+        None,
+        [],
+    ],
+)
+def test_ControlField008_invalid_code_value(field_value):
+    with pytest.raises(ValidationError) as e:
+        ControlField008(tag="008", value=field_value)
+    assert e.value.errors()[0]["type"] == "string_type"
+    assert e.value.errors()[0]["loc"] == ("value",)
+    assert len(e.value.errors()) == 1
+
+
+def test_ControlField008_invalid_code_literal():
+    with pytest.raises(ValidationError) as e:
+        ControlField008(tag="020", value="foo")
+    assert [i["type"] for i in e.value.errors()] == [
+        "literal_error",
+        "string_pattern_mismatch",
+    ]
+    assert len(e.value.errors()) == 2
 
 
 @pytest.mark.parametrize(

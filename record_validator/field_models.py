@@ -30,9 +30,72 @@ class BibVendorCode(BaseDataField):
     ]
 
 
-class ControlField(BaseControlField):
-    tag: Literal["001", "003", "005", "006", "007", "008"]
-    value: str
+class ControlField001(BaseControlField):
+    tag: Annotated[Literal["001"], Field(alias="001")]
+    value: Annotated[
+        str,
+        Field(examples=["ocn123456789", "ocm123456789"]),
+    ]
+
+
+class ControlField003(BaseControlField):
+    tag: Annotated[Literal["003"], Field(alias="003")]
+    value: Annotated[
+        str,
+        Field(examples=["OCoLC", "DLC"]),
+    ]
+
+
+class ControlField005(BaseControlField):
+    tag: Annotated[Literal["005"], Field(alias="005")]
+    value: Annotated[
+        str,
+        Field(pattern=r"^\d{14}\.\d$", examples=["20240101125000.0"]),
+    ]
+
+
+class ControlField006(BaseControlField):
+    tag: Annotated[Literal["006"], Field(alias="006")]
+    value: Annotated[
+        str,
+        Field(pattern=r"^[A-z0-9|\\ ]{1,18}$", examples=["b|||||||||||||||||"]),
+    ]
+
+
+class ControlField007(BaseControlField):
+    tag: Annotated[Literal["007"], Field(alias="007")]
+    value: Annotated[
+        str,
+        Field(pattern=r"^[A-z0-9|\\ ]{2,23}$", examples=["cr |||||||||||"]),
+    ]
+
+
+class ControlField008(BaseControlField):
+    tag: Annotated[Literal["008"], Field(alias="008")]
+    value: Annotated[
+        str,
+        Field(
+            pattern=r"^[a-z0-9|\\ ]{40}$",
+            examples=["210505s2021    nyu           000 0 eng d"],
+        ),
+    ]
+
+
+# class ControlField(BaseControlField):
+#     tag: Literal["001", "003", "005", "006", "007", "008"]
+#     value: Annotated[
+#         str,
+#         Field(
+#             examples=[
+#                 {"001": "ocn123456789"},
+#                 {"003": "OCoLC"},
+#                 {"005": "20210505123456"},
+#                 {"006": "m d"},
+#                 {"007": "cr"},
+#                 {"008": "210505s2021    nyu           000 0 eng d"},
+#             ]
+#         ),
+#     ]
 
 
 class InvoiceField(BaseDataField):
@@ -80,7 +143,9 @@ class InvoiceField(BaseDataField):
             examples=["100", "200"],
         ),
     ]
-    invoice_number: Annotated[str, Field(exclude=True)]
+    invoice_number: Annotated[
+        str, Field(exclude=True, examples=["20051330", "20051331"])
+    ]
     invoice_copies: Annotated[
         str,
         Field(
@@ -104,7 +169,9 @@ class ItemField(BaseDataField):
             exclude=True,
         ),
     ]
-    item_volume: Optional[Annotated[str, Field(exclude=True)]] = None
+    item_volume: Optional[
+        Annotated[str, Field(exclude=True, examples=["v. 1", "v. 10"])]
+    ] = None
     item_agency: Annotated[
         Literal["43"],
         Field(exclude=True),
@@ -207,7 +274,7 @@ class OrderField(BaseDataField):
     ]
     order_fund: Annotated[
         str,
-        Field(exclude=True),
+        Field(exclude=True, examples=["41901apprv"]),
     ]
 
 
