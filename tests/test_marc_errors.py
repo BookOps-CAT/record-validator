@@ -206,8 +206,10 @@ def test_MarcValidationError_literal_error(stub_record):
             "field": "960$t",
         },
     ]
-    assert errors["invalid_field_count"] == 1
-    assert errors["error_count"] == 1
+    assert len(errors["invalid_fields"]) == 1
+    assert len(errors["missing_fields"]) == 0
+    assert len(errors["extra_fields"]) == 0
+    assert len(errors["order_item_mismatches"]) == 0
 
 
 def test_MarcValidationError_string_type(stub_record):
@@ -224,8 +226,10 @@ def test_MarcValidationError_string_type(stub_record):
         "error_type": "Input should be a valid string. Examples: ['100', '200']",
         "field": "960$s",
     }
-    assert errors["invalid_field_count"] == 2
-    assert errors["error_count"] == 2
+    assert len(errors["invalid_fields"]) == 2
+    assert len(errors["missing_fields"]) == 0
+    assert len(errors["extra_fields"]) == 0
+    assert len(errors["order_item_mismatches"]) == 0
 
 
 def test_MarcValidationError_string_pattern(stub_record):
@@ -240,8 +244,10 @@ def test_MarcValidationError_string_pattern(stub_record):
             "field": "960$s",
         }
     ]
-    assert errors["invalid_field_count"] == 1
-    assert errors["error_count"] == 1
+    assert len(errors["invalid_fields"]) == 1
+    assert len(errors["missing_fields"]) == 0
+    assert len(errors["extra_fields"]) == 0
+    assert len(errors["order_item_mismatches"]) == 0
 
 
 def test_MarcValidationError_extra_fields(stub_record):
@@ -252,10 +258,9 @@ def test_MarcValidationError_extra_fields(stub_record):
     with pytest.raises(ValidationError) as e:
         MonographRecord(**record_dict)
     errors = MarcValidationError(e.value.errors()).to_dict()
-    assert errors["missing_field_count"] == 0
-    assert errors["invalid_field_count"] == 1
-    assert errors["extra_field_count"] == 3
-    assert errors["error_count"] == 4
+    assert len(errors["missing_fields"]) == 0
+    assert len(errors["invalid_fields"]) == 1
+    assert len(errors["extra_fields"]) == 3
     assert len(errors["order_item_mismatches"]) == 0
     assert errors["missing_fields"] == []
     assert errors["invalid_fields"] == [
@@ -277,10 +282,9 @@ def test_MarcValidationError_multiple_errors_order_item(stub_record):
     with pytest.raises(ValidationError) as e:
         MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
     errors = MarcValidationError(e.value.errors()).to_dict()
-    assert errors["missing_field_count"] == 1
-    assert errors["invalid_field_count"] == 2
-    assert errors["extra_field_count"] == 0
-    assert errors["error_count"] == 4
+    assert len(errors["missing_fields"]) == 1
+    assert len(errors["invalid_fields"]) == 2
+    assert len(errors["extra_fields"]) == 0
     assert len(errors["order_item_mismatches"]) == 1
     assert errors["missing_fields"] == ["980"]
     assert errors["invalid_fields"][0]["field"] == "852$h"

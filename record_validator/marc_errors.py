@@ -163,20 +163,9 @@ class MarcValidationError:
 
     def to_dict(self):
         out_dict = {
-            "valid": False,
-            "error_count": 0,
-            "missing_field_count": len(self.missing_fields),
             "missing_fields": [i.loc_marc for i in self.missing_fields],
-            "extra_field_count": len(self.extra_fields),
             "extra_fields": [i.loc_marc for i in self.extra_fields],
-            "invalid_field_count": len(self.invalid_fields),
             "invalid_fields": self.invalid_fields,
             "order_item_mismatches": self.order_item_mismatches,
         }
-        out_dict["error_count"] = (
-            out_dict["missing_field_count"]
-            + out_dict["extra_field_count"]
-            + out_dict["invalid_field_count"]
-        )
-        out_dict["error_count"] += len(self.order_item_mismatches)
         return out_dict
