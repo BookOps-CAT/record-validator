@@ -10,7 +10,7 @@ def test_MonographRecord_valid():
     model = MonographRecord(
         leader="00000cam a2200000 a 4500",
         fields=[
-            {"008": "200101s2001    xx      b    000 0 eng  "},
+            {"008": "200101s2001    xx      b    000 0 eng  d"},
             {
                 "050": {
                     "ind1": " ",
