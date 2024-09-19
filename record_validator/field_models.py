@@ -14,6 +14,7 @@ class BibCallNo(BaseDataField):
         Field(
             pattern=r"^ReCAP 23-\d{6}$|^ReCAP 24-\d{6}$|^ReCAP 25-\d{6}$",
             exclude=True,
+            examples=["ReCAP 23-000001", "ReCAP 24-100001", "ReCAP 25-222000"],
         ),
     ]
 
@@ -43,6 +44,7 @@ class InvoiceField(BaseDataField):
         str,
         Field(
             pattern=r"^\d{6}$",
+            examples=["240101", "230202"],
             exclude=True,
         ),
     ]
@@ -51,6 +53,7 @@ class InvoiceField(BaseDataField):
         Field(
             pattern=r"^\d{3,}$",
             exclude=True,
+            examples=["100", "200"],
         ),
     ]
     invoice_shipping: Annotated[
@@ -58,6 +61,7 @@ class InvoiceField(BaseDataField):
         Field(
             pattern=r"^\d{1,}$",
             exclude=True,
+            examples=["1", "20"],
         ),
     ]
     invoice_tax: Annotated[
@@ -65,6 +69,7 @@ class InvoiceField(BaseDataField):
         Field(
             pattern=r"^\d{1,}$",
             exclude=True,
+            examples=["1", "20"],
         ),
     ]
     invoice_net_price: Annotated[
@@ -72,6 +77,7 @@ class InvoiceField(BaseDataField):
         Field(
             pattern=r"^\d{3,}$",
             exclude=True,
+            examples=["100", "200"],
         ),
     ]
     invoice_number: Annotated[str, Field(exclude=True)]
@@ -80,6 +86,7 @@ class InvoiceField(BaseDataField):
         Field(
             pattern=r"^\d{1,}$",
             exclude=True,
+            examples=["1", "20", "4"],
         ),
     ]
 
@@ -93,6 +100,7 @@ class ItemField(BaseDataField):
         str,
         Field(
             pattern=r"^ReCAP 23-\d{6}$|^ReCAP 24-\d{6}$|^ReCAP 25-\d{6}$",
+            examples=["ReCAP 23-000001", "ReCAP 24-100001", "ReCAP 25-222000"],
             exclude=True,
         ),
     ]
@@ -105,6 +113,7 @@ class ItemField(BaseDataField):
         str,
         Field(
             pattern=r"^33433[0-9]{9}$",
+            examples=["33433123456789", "33433111111111"],
             exclude=True,
         ),
     ]
@@ -128,7 +137,11 @@ class ItemField(BaseDataField):
     message: Optional[Annotated[str, Field(exclude=True)]] = None
     item_price: Annotated[
         str,
-        Field(pattern=r"^\d{1,}\.\d{2}$", exclude=True),
+        Field(
+            pattern=r"^\d{1,}\.\d{2}$",
+            exclude=True,
+            examples=["1.00", "0.00"],
+        ),
     ]
     item_type: Annotated[
         Optional[Literal["2", "55"]], Field(exclude=True, default=None)
@@ -149,7 +162,7 @@ class LCClass(BaseDataField):
     ind1: Literal[" ", "", "0", "1"]
     ind2: Literal["0", "4"]
     subfields: List[Dict[str, str]]
-    lcc: Annotated[str, Field(exclude=True)]
+    lcc: Annotated[str, Field(exclude=True, examples=["PJ7962.H565", "DK504.932.R87"])]
 
     @model_validator(mode="after")
     def validate_indicator_pair(self) -> "LCClass":
@@ -183,6 +196,7 @@ class OrderField(BaseDataField):
         Field(
             pattern=r"^\d{3,}$",
             exclude=True,
+            examples=["100", "200"],
         ),
     ]
     order_location: Annotated[
@@ -202,6 +216,7 @@ class OtherDataField(BaseDataField):
         str,
         Field(
             pattern=r"0[1-9]{2}|0[1-46-9]0|^[1-7]\d\d|8[0-46-9]\d|85[013-9]|90[02-9]|9[168][1-9]|94[0-8]|9[23579]\d",  # noqa: E501
+            examples=["100", "710", "650", "245"],
         ),
     ]
     ind1: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
