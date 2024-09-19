@@ -148,7 +148,7 @@ def test_MonographRecord_from_marc_invalid(stub_record):
         MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
     assert len(e.value.errors()) == 2
     assert sorted([i["type"] for i in e.value.errors()]) == sorted(
-        ["missing_required_field", "string_pattern_mismatch"]
+        ["missing", "string_pattern_mismatch"]
     )
 
 
@@ -213,7 +213,7 @@ def test_MonographRecord_invalid():
         MonographRecord(**record_dict)
     assert len(e.value.errors()) == 3
     assert sorted([i["type"] for i in e.value.errors()]) == sorted(
-        ["literal_error", "string_pattern_mismatch", "missing_required_field"]
+        ["literal_error", "string_pattern_mismatch", "missing"]
     )
 
 
@@ -222,9 +222,7 @@ def test_MonographRecord_missing_field(stub_record):
     with pytest.raises(ValidationError) as e:
         MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
     assert len(e.value.errors()) == 1
-    assert sorted([i["type"] for i in e.value.errors()]) == sorted(
-        ["missing_required_field"]
-    )
+    assert sorted([i["type"] for i in e.value.errors()]) == sorted(["missing"])
 
 
 def test_MonographRecord_string_pattern_mismatch(stub_record):

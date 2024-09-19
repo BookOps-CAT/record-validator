@@ -428,12 +428,12 @@ def test_validate_fields_missing_field(stub_record):
     assert e.value.errors()[0]["type"] == "missing"
 
 
-def test_validate_fields_missing_required_field(stub_record):
+def test_validate_fields_missing_entire_field(stub_record):
     stub_record.remove_fields("960")
     with pytest.raises(ValidationError) as e:
         validate_fields(stub_record.as_dict()["fields"])
     assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "missing_required_field"
+    assert e.value.errors()[0]["type"] == "missing"
 
 
 def test_validate_fields_multiple_errors_order_item_mismatch(stub_record):
@@ -443,7 +443,7 @@ def test_validate_fields_multiple_errors_order_item_mismatch(stub_record):
     with pytest.raises(ValidationError) as e:
         validate_fields(stub_record.as_dict()["fields"])
     assert len(e.value.errors()) == 2
-    assert e.value.errors()[0]["type"] == "missing_required_field"
+    assert e.value.errors()[0]["type"] == "missing"
     assert e.value.errors()[1]["type"] == "order_item_mismatch"
 
 

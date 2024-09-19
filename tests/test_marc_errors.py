@@ -52,7 +52,7 @@ def test_MarcError_missing_field(stub_record):
     assert error.loc_marc == "960$t"
 
 
-def test_MarcError_missing_required_field(stub_record):
+def test_MarcError_missing_entire_field(stub_record):
     stub_record.remove_fields("980")
     with pytest.raises(ValidationError) as e:
         MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
@@ -63,7 +63,7 @@ def test_MarcError_missing_required_field(stub_record):
         "980",
     )
     assert error.ctx is None
-    assert error.type == "missing_required_field"
+    assert error.type == "missing"
     assert error.msg == "Field required: 980"
     assert error.loc_marc == "980"
 
@@ -283,7 +283,7 @@ def test_MarcValidationError_multiple_errors_order_item(stub_record):
         MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
     errors = MarcValidationError(e.value.errors()).to_dict()
     assert len(errors["missing_fields"]) == 1
-    assert len(errors["invalid_fields"]) == 2
+    assert len(errors["invalid_fields"]) == 1
     assert len(errors["extra_fields"]) == 0
     assert len(errors["order_item_mismatches"]) == 1
     assert errors["missing_fields"] == ["980"]

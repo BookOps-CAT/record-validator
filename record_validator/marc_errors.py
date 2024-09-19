@@ -74,7 +74,7 @@ class MarcError:
                 "item_location",
                 "item_type",
             )
-        elif self.type == "missing_required_field":
+        elif self.type == "missing" and self.original_error["loc"] == ("fields",):
             return (
                 "fields",
                 self.input,
@@ -146,7 +146,7 @@ class MarcValidationError:
             if i.type
             not in [
                 "missing",
-                "missing_before_validation",
+                "missing_required_field",
                 "extra_forbidden",
                 "order_item_mismatch",
             ]

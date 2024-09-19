@@ -91,8 +91,6 @@ def get_examples_from_schema(field: tuple) -> Union[List[str], None]:
 
 def get_field_tag(field: Union[MarcField, dict]) -> str:
     tag = field.tag if isinstance(field, MarcField) else list(field.keys())[0]
-    # if tag in CONTROL_FIELDS:
-    #     return "control_field"
     if tag in REQUIRED_FIELDS or tag in CONTROL_FIELDS:
         return tag
     else:
@@ -168,9 +166,7 @@ def validate_fields(self: list) -> list:
     for tag in missing_fields:
         validation_errors.append(
             InitErrorDetails(
-                type=PydanticCustomError(
-                    "missing_required_field", f"Field required: {tag}"
-                ),
+                type=PydanticCustomError("missing", f"Field required: {tag}"),
                 input=tag,
             )
         )
