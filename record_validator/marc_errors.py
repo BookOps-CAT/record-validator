@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Any, Tuple, Union
 from pydantic_core import ErrorDetails
+from record_validator.parsers import get_examples_from_schema
 
 
 class MarcEncoding(Enum):
@@ -41,6 +42,7 @@ class MarcEncoding(Enum):
     item_type = "$t"
     library_field = "910"
     library = "$a"
+    subfields = "subfields"
 
 
 class MarcError:
@@ -53,7 +55,7 @@ class MarcError:
         self.input: Union[str, tuple] = self._get_input()
         self.loc: Union[str, tuple] = self._get_loc()
         self.loc_marc: Union[str, tuple] = self._loc2marc()
-        self.msg: Union[str, None] = error.get("msg", None)
+        self.msg: Union[str, None] = self._get_msg()
 
     def _get_input(self):
         if self.type == "order_item_mismatch":
@@ -80,20 +82,37 @@ class MarcError:
         else:
             return self.original_error.get("loc")
 
+    def _get_msg(self):
+        if self.ctx is not None and "pattern" in self.ctx:
+            examples = get_examples_from_schema(self.loc)
+            out_msg = self.original_error.get("msg").split(" '")[0].strip()
+            return f"{out_msg}. Examples: {examples}"
+        elif self.ctx is not None and "expected" in self.ctx:
+            examples = self.ctx["expected"]
+            out_msg = self.original_error.get("msg").split(" '")[0].strip()
+            return f"{out_msg}: {examples}"
+        elif self.ctx is None and self.type == "string_type":
+            examples = get_examples_from_schema(self.loc)
+            out_msg = self.original_error.get("msg").split(" '")[0].strip()
+            return f"{out_msg}. Examples: {examples}"
+        else:
+            return self.original_error.get("msg", None)
+
     def _loc2marc(self) -> Union[str, Tuple[str, str, str]]:
         out_loc = []
         if self.type == "order_item_mismatch":
             return ("960$t", "949_$l", "949_$t")
-        locs = [
-            i
-            for i in self.loc
-            if i != "fields" and i != "subfields" and isinstance(i, str)
-        ]
+        if self.type == "extra_forbidden":
+            locs = [i for i in self.loc if isinstance(i, str)]
+        else:
+            locs = [i for i in self.loc if i != "subfields" and isinstance(i, str)]
         for i in locs:
             if i in MarcEncoding.__members__:
                 out_loc.append(MarcEncoding[str(i)].value)
             elif len(i) == 1 and not i.isdigit():
                 out_loc.append(f"${i}")
+            elif i == "fields" or i == "value":
+                pass
             else:
                 out_loc.append(i)
         return "".join(out_loc)
@@ -112,7 +131,9 @@ class MarcValidationError:
 
     def _get_missing_fields(self) -> list:
         return [
-            i for i in self.errors if i.type in ["missing", "missing_before_validation"]
+            i
+            for i in self.errors
+            if i.type == "missing" or i.type == "missing_required_field"
         ]
 
     def _get_extra_fields(self) -> list:
@@ -133,13 +154,8 @@ class MarcValidationError:
 
         invalid_field_list = []
         for error in invalid_fields:
-            invalid_field_list.append(
-                {
-                    "invalid_field": error.loc_marc,
-                    "input": error.input,
-                    "expectation": error.ctx,
-                }
-            )
+            out = {"field": error.loc_marc, "error_type": error.msg}
+            invalid_field_list.append(out)
         return invalid_field_list
 
     def _get_order_item_mismatch_errors(self) -> list:
