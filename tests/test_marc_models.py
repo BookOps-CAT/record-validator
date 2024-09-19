@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 from contextlib import nullcontext as does_not_raise
 from pymarc import Field as MarcField
-from pymarc import Subfield
+from pymarc import Subfield, Leader, MARCReader
 from record_validator.marc_models import MonographRecord
 
 
@@ -75,8 +75,15 @@ def test_MonographRecord_valid():
 
 
 def test_MonographRecord_from_marc_valid(stub_record):
-    with does_not_raise():
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+    record_1 = stub_record
+    record_2 = stub_record.as_marc21()
+    reader = MARCReader(record_2)
+    record_2 = next(reader)
+    assert isinstance(record_1.leader, str)
+    assert isinstance(record_2.leader, Leader)
+    model_1 = MonographRecord(leader=record_1.leader, fields=record_1.fields)
+    model_2 = MonographRecord(leader=record_2.leader, fields=record_2.fields)
+    assert model_1.model_dump().keys() == model_2.model_dump().keys()
 
 
 def test_MonographRecord_from_marc_dict_valid(stub_record):
