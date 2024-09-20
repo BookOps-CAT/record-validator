@@ -58,14 +58,19 @@ class MarcError:
         self.msg: Union[str, None] = self._get_msg()
 
     def _get_input(self):
+        input = self.original_error.get("input")
         if self.type == "order_item_mismatch":
             return (
-                self.original_error["input"]["item_type"],
-                self.original_error["input"]["item_location"],
-                self.original_error["input"]["order_location"],
+                input["item_type"],
+                input["item_location"],
+                input["order_location"],
             )
+        elif self.type == "value_error":
+            ind1 = input.indicator1 if hasattr(input, "indicator1") else input["ind1"]
+            ind2 = input.indicator2 if hasattr(input, "indicator2") else input["ind2"]
+            return [ind1, ind2]
         else:
-            return self.original_error.get("input")
+            return input
 
     def _get_loc(self):
         if self.type == "order_item_mismatch":
@@ -95,6 +100,8 @@ class MarcError:
             examples = get_examples_from_schema(self.loc)
             out_msg = self.original_error.get("msg").split(" '")[0].strip()
             return f"{out_msg}. Examples: {examples}"
+        elif self.type == "value_error":
+            return self.original_error.get("msg").strip("Value error, ")
         else:
             return self.original_error.get("msg", None)
 
@@ -124,6 +131,7 @@ class MarcValidationError:
 
     def __init__(self, errors: list):
         self.errors = [MarcError(i) for i in errors]
+        self.error_count = len(errors)
         self.missing_fields = self._get_missing_fields()
         self.extra_fields = self._get_extra_fields()
         self.invalid_fields = self._get_invalid_fields()
@@ -154,7 +162,11 @@ class MarcValidationError:
 
         invalid_field_list = []
         for error in invalid_fields:
-            out = {"field": error.loc_marc, "error_type": error.msg}
+            out = {
+                "field": error.loc_marc,
+                "input": error.input,
+                "error_type": error.msg,
+            }
             invalid_field_list.append(out)
         return invalid_field_list
 
@@ -163,6 +175,7 @@ class MarcValidationError:
 
     def to_dict(self):
         out_dict = {
+            "error_count": self.error_count,
             "missing_fields": [i.loc_marc for i in self.missing_fields],
             "extra_fields": [i.loc_marc for i in self.extra_fields],
             "invalid_fields": self.invalid_fields,

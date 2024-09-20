@@ -129,6 +129,35 @@ def test_MarcError_literal_indicator_error(stub_record):
     assert error.loc_marc == "960ind1"
 
 
+def test_MarcError_lcc_indicator_error(stub_record):
+    stub_record.remove_fields("050")
+    stub_record.add_field(
+        MarcField(
+            tag="050",
+            indicators=[" ", "0"],
+            subfields=[
+                Subfield(code="a", value="F00"),
+            ],
+        )
+    )
+    with pytest.raises(ValidationError) as e:
+        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+    error = MarcError(e.value.errors()[0])
+    assert len(e.value.errors()) == 1
+    assert error.loc == (
+        "fields",
+        "050",
+    )
+    assert error.input == [" ", "0"]
+    assert isinstance(error.ctx, dict)
+    assert error.type == "value_error"
+    assert (
+        error.msg
+        == "Invalid indicators. Valid combinations are: [(' ', '4'), ('', '4'), ('0', '0'), ('1', '0')]"
+    )
+    assert error.loc_marc == "050"
+
+
 def test_MarcError_extra_fields(stub_record):
     record_dict = stub_record.as_dict()
     record_dict["fields"].append(
@@ -200,10 +229,12 @@ def test_MarcValidationError_literal_error(stub_record):
     with pytest.raises(ValidationError) as e:
         MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
     errors = MarcValidationError(e.value.errors()).to_dict()
+    assert errors["error_count"] == 1
     assert errors["invalid_fields"] == [
         {
             "error_type": "Input should be: 'MAB', 'MAF', 'MAG', 'MAL', 'MAP', 'MAS', 'PAD', 'PAH', 'PAM', 'PAT' or 'SC'",
             "field": "960$t",
+            "input": "foo",
         },
     ]
     assert len(errors["invalid_fields"]) == 1
@@ -218,13 +249,16 @@ def test_MarcValidationError_string_type(stub_record):
     with pytest.raises(ValidationError) as e:
         MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
     errors = MarcValidationError(e.value.errors()).to_dict()
+    assert errors["error_count"] == 2
     assert errors["invalid_fields"][0] == {
         "error_type": "Input should be a valid string. Examples: ['100', '200']",
         "field": "960$s",
+        "input": 1.0,
     }
     assert errors["invalid_fields"][1] == {
         "error_type": "Input should be a valid string. Examples: ['100', '200']",
         "field": "960$s",
+        "input": 1.0,
     }
     assert len(errors["invalid_fields"]) == 2
     assert len(errors["missing_fields"]) == 0
@@ -238,10 +272,12 @@ def test_MarcValidationError_string_pattern(stub_record):
     with pytest.raises(ValidationError) as e:
         MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
     errors = MarcValidationError(e.value.errors()).to_dict()
+    assert errors["error_count"] == 1
     assert errors["invalid_fields"] == [
         {
             "error_type": "String should match pattern. Examples: ['100', '200']",
             "field": "960$s",
+            "input": "1.00",
         }
     ]
     assert len(errors["invalid_fields"]) == 1
@@ -258,6 +294,7 @@ def test_MarcValidationError_extra_fields(stub_record):
     with pytest.raises(ValidationError) as e:
         MonographRecord(**record_dict)
     errors = MarcValidationError(e.value.errors()).to_dict()
+    assert errors["error_count"] == 4
     assert len(errors["missing_fields"]) == 0
     assert len(errors["invalid_fields"]) == 1
     assert len(errors["extra_fields"]) == 3
@@ -267,6 +304,7 @@ def test_MarcValidationError_extra_fields(stub_record):
         {
             "field": "003",
             "error_type": "Input should be a valid string. Examples: ['OCoLC', 'DLC']",
+            "input": {"ind1": " ", "ind2": " ", "subfields": [{"a": "foo"}]},
         }
     ]
     assert errors["extra_fields"] == ["003ind1", "003ind2", "003subfields"]
@@ -282,11 +320,18 @@ def test_MarcValidationError_multiple_errors_order_item(stub_record):
     with pytest.raises(ValidationError) as e:
         MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
     errors = MarcValidationError(e.value.errors()).to_dict()
+    assert errors["error_count"] == 3
     assert len(errors["missing_fields"]) == 1
     assert len(errors["invalid_fields"]) == 1
     assert len(errors["extra_fields"]) == 0
     assert len(errors["order_item_mismatches"]) == 1
     assert errors["missing_fields"] == ["980"]
-    assert errors["invalid_fields"][0]["field"] == "852$h"
+    assert errors["invalid_fields"] == [
+        {
+            "field": "852$h",
+            "input": "ReCAP-24-119100",
+            "error_type": "String should match pattern. Examples: ['ReCAP 23-000001', 'ReCAP 24-100001', 'ReCAP 25-222000']",
+        }
+    ]
     assert errors["extra_fields"] == []
     assert errors["order_item_mismatches"] == [("55", "rcmf2", "PAH")]
