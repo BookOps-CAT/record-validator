@@ -1,6 +1,5 @@
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 from pydantic import Field, model_validator
-from pydantic_core import PydanticCustomError
 from record_validator.base_fields import BaseDataField, BaseControlField
 
 
@@ -79,23 +78,6 @@ class ControlField008(BaseControlField):
             examples=["210505s2021    nyu           000 0 eng d"],
         ),
     ]
-
-
-# class ControlField(BaseControlField):
-#     tag: Literal["001", "003", "005", "006", "007", "008"]
-#     value: Annotated[
-#         str,
-#         Field(
-#             examples=[
-#                 {"001": "ocn123456789"},
-#                 {"003": "OCoLC"},
-#                 {"005": "20210505123456"},
-#                 {"006": "m d"},
-#                 {"007": "cr"},
-#                 {"008": "210505s2021    nyu           000 0 eng d"},
-#             ]
-#         ),
-#     ]
 
 
 class InvoiceField(BaseDataField):
@@ -235,8 +217,8 @@ class LCClass(BaseDataField):
     def validate_indicator_pair(self) -> "LCClass":
         valid_combos = [(" ", "4"), ("", "4"), ("0", "0"), ("1", "0")]
         if (self.ind1, self.ind2) not in valid_combos:
-            raise PydanticCustomError(
-                "literal_error", f"Invalid indicators: [{self.ind1}, {self.ind2}]"
+            raise ValueError(
+                f"Invalid indicators. Valid combinations are: {valid_combos}"
             )
         else:
             return self

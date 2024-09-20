@@ -1240,7 +1240,7 @@ def test_LCClass_invalid_indicators(ind1_value, ind2_value):
 def test_LCClass_invalid_indicator_combo(ind1_value, ind2_value):
     with pytest.raises(ValidationError) as e:
         LCClass(tag="050", ind1=ind1_value, ind2=ind2_value, subfields=[{"a": "F00"}])
-    assert e.value.errors()[0]["type"] == "literal_error"
+    assert e.value.errors()[0]["type"] == "value_error"
     assert len(e.value.errors()) == 1
 
 
