@@ -1,5 +1,3 @@
-from pymarc import Field as MarcField
-from pymarc import Subfield
 import pytest
 from record_validator.adapters import (
     MonographRecordAdapter,
@@ -17,39 +15,20 @@ def test_get_material_type_monograph(stub_record):
     assert get_material_type(stub_record.fields) == "monograph"
 
 
-def test_get_material_type_dance(stub_record):
-    stub_record.remove_fields("960")
-    stub_record.add_field(
-        MarcField(
-            tag="960",
-            indicators=[" ", "1"],
-            subfields=[Subfield(code="t", value="PAD")],
-        )
-    )
-    assert get_material_type(stub_record.fields) == "other"
+def test_get_material_type_dance(stub_dance_record):
+    assert get_material_type(stub_dance_record.fields) == "other"
 
 
-def test_get_material_type_pamphlet(stub_record):
-    stub_record["300"].delete_subfield("a")
-    stub_record["300"].add_subfield("a", "5 pages")
-    assert get_material_type(stub_record.fields) == "other"
+def test_get_material_type_pamphlet(stub_pamphlet_record):
+    assert get_material_type(stub_pamphlet_record.fields) == "other"
 
 
-def test_get_material_type_catalogue(stub_record):
-    stub_record.add_field(
-        MarcField(
-            tag="650",
-            indicators=[" ", " "],
-            subfields=[Subfield(code="v", value="Catalogues raisonnés")],
-        )
-    )
-    assert get_material_type(stub_record.fields) == "other"
+def test_get_material_type_catalogue(stub_catalogue_record):
+    assert get_material_type(stub_catalogue_record.fields) == "other"
 
 
-def test_get_material_type_multivol(stub_record):
-    stub_record["300"].delete_subfield("a")
-    stub_record["300"].add_subfield("a", "5 volumes")
-    assert get_material_type(stub_record.fields) == "other"
+def test_get_material_type_multivol(stub_multivol_record):
+    assert get_material_type(stub_multivol_record.fields) == "other"
 
 
 def test_get_material_type_dict(stub_record):

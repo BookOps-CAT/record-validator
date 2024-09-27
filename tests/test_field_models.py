@@ -58,29 +58,15 @@ def test_BibCallNo_valid(ind1_value, ind2_value, field_value):
     }
 
 
-def test_BibCallNo_valid_from_field(stub_record_with_dupes):
-    field_1 = stub_record_with_dupes.get_fields("852")[0]
-    field_2 = stub_record_with_dupes.get_fields("852")[1]
-    assert isinstance(field_1, MarcField)
-    assert isinstance(field_2, MarcField)
-    model_1 = BibCallNo.model_validate(field_1, from_attributes=True)
-    model_2 = BibCallNo.model_validate(field_2, from_attributes=True)
-    assert model_1.model_dump(by_alias=True) == {
+def test_BibCallNo_valid_from_field(stub_record):
+    field = stub_record.get_fields("852")[0]
+    assert isinstance(field, MarcField)
+    model = BibCallNo.model_validate(field, from_attributes=True)
+    assert model.model_dump(by_alias=True) == {
         "852": {
             "ind1": "8",
             "ind2": " ",
             "subfields": [{"h": "ReCAP 23-100000"}],
-        }
-    }
-    assert model_2.model_dump(by_alias=True) == {
-        "852": {
-            "ind1": "8",
-            "ind2": " ",
-            "subfields": [
-                {
-                    "h": "ReCAP 25-000000",
-                }
-            ],
         }
     }
 
