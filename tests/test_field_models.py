@@ -14,6 +14,7 @@ from record_validator.field_models import (
     ItemField,
     LCClass,
     LibraryField,
+    MonographOtherField,
     OrderField,
     OtherDataField,
 )
@@ -1332,6 +1333,61 @@ def test_LibraryField_invalid_library_field_type(field_value):
     assert len(e.value.errors()) == 2
 
 
+@pytest.mark.parametrize(
+    "tag",
+    [
+        "020",
+        "100",
+        "300",
+        "336",
+        "490",
+        "500",
+        "600",
+        "650",
+        "655",
+        "710",
+        "856",
+        "880",
+        "990",
+        "994",
+    ],
+)
+def test_MonographOtherField_valid_tag_literal(tag):
+    model = MonographOtherField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
+    model.model_dump(by_alias=True) == {
+        tag: {
+            "ind1": " ",
+            "ind2": " ",
+            "subfields": [{"a": "foo"}],
+        }
+    }
+
+
+@pytest.mark.parametrize(
+    "tag",
+    [
+        "001",
+        "003",
+        "005",
+        "006",
+        "008",
+        "050",
+        "852",
+        "901",
+        "910",
+        "949",
+        "960",
+        "980",
+    ],
+)
+def test_MonographOtherField_invalid_tag_literal(tag):
+    with pytest.raises(ValidationError) as e:
+        MonographOtherField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
+    error_types = [error["type"] for error in e.value.errors()]
+    assert len(e.value.errors()) == 1
+    assert error_types == ["string_pattern_mismatch"]
+
+
 def test_OrderField_valid():
     model = OrderField(
         tag="960",
@@ -1460,22 +1516,7 @@ def test_OrderField_invalid_fund(fund_field):
 
 @pytest.mark.parametrize(
     "tag",
-    [
-        "020",
-        "100",
-        "300",
-        "336",
-        "490",
-        "500",
-        "600",
-        "650",
-        "655",
-        "710",
-        "856",
-        "880",
-        "990",
-        "994",
-    ],
+    ["020", "100", "300", "336", "490", "949", "852"],
 )
 def test_OtherDataField_valid_tag_literal(tag):
     model = OtherDataField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
@@ -1497,10 +1538,8 @@ def test_OtherDataField_valid_tag_literal(tag):
         "006",
         "008",
         "050",
-        "852",
         "901",
         "910",
-        "949",
         "960",
         "980",
     ],
