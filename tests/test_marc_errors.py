@@ -2,8 +2,222 @@ import pytest
 from pymarc import Subfield
 from pymarc import Field as MarcField
 from pydantic import ValidationError
-from record_validator.marc_errors import MarcError, MarcValidationError
+from record_validator.marc_errors import (
+    get_examples_from_schema,
+    MarcError,
+    MarcValidationError,
+)
 from record_validator.marc_models import MonographRecord
+
+
+@pytest.mark.parametrize(
+    "field, examples",
+    [
+        (
+            (
+                "960",
+                "order_price",
+            ),
+            ["100", "200"],
+        ),
+        (
+            (
+                "fields",
+                "001",
+                "value",
+            ),
+            ["ocn123456789", "ocm123456789"],
+        ),
+        (
+            (
+                "fields",
+                "003",
+                "value",
+            ),
+            ["OCoLC", "DLC"],
+        ),
+        (
+            (
+                "fields",
+                "005",
+                "value",
+            ),
+            ["20240101125000.0"],
+        ),
+        (
+            (
+                "fields",
+                "006",
+                "value",
+            ),
+            ["b|||||||||||||||||"],
+        ),
+        (
+            (
+                "fields",
+                "007",
+                "value",
+            ),
+            ["cr |||||||||||"],
+        ),
+        (
+            (
+                "fields",
+                "008",
+                "value",
+            ),
+            ["210505s2021    nyu           000 0 eng d"],
+        ),
+        (
+            (
+                "fields",
+                "245",
+            ),
+            None,
+        ),
+        (
+            (
+                "fields",
+                "901",
+                "vendor_code",
+            ),
+            ["EVP", "AUXAM", "LEILA"],
+        ),
+        (
+            (
+                "fields",
+                "910",
+                "library",
+            ),
+            ["RL", "BL", "BPL"],
+        ),
+        (
+            (
+                "fields",
+                "852",
+                "call_no",
+            ),
+            ["ReCAP 23-000001", "ReCAP 24-100001", "ReCAP 25-222000"],
+        ),
+        (
+            (
+                "fields",
+                "050",
+                "lcc",
+            ),
+            ["PJ7962.H565", "DK504.932.R87"],
+        ),
+        (
+            (
+                "fields",
+                "980",
+                "invoice_date",
+            ),
+            ["240101", "230202"],
+        ),
+        (
+            (
+                "fields",
+                "980",
+                "invoice_price",
+            ),
+            ["100", "200"],
+        ),
+        (
+            (
+                "fields",
+                "980",
+                "invoice_shipping",
+            ),
+            ["1", "20"],
+        ),
+        (
+            (
+                "fields",
+                "980",
+                "invoice_tax",
+            ),
+            ["1", "20"],
+        ),
+        (
+            (
+                "fields",
+                "980",
+                "invoice_net_price",
+            ),
+            ["100", "200"],
+        ),
+        (
+            (
+                "fields",
+                "980",
+                "invoice_number",
+            ),
+            ["20051330", "20051331"],
+        ),
+        (
+            (
+                "fields",
+                "980",
+                "invoice_copies",
+            ),
+            ["1", "20", "4"],
+        ),
+        (
+            (
+                "fields",
+                "949",
+                "item_call_no",
+            ),
+            ["ReCAP 23-000001", "ReCAP 24-100001", "ReCAP 25-222000"],
+        ),
+        (
+            (
+                "fields",
+                "949",
+                "item_barcode",
+            ),
+            ["33433123456789", "33433111111111"],
+        ),
+        (
+            (
+                "fields",
+                "949",
+                "item_price",
+            ),
+            ["1.00", "0.00"],
+        ),
+        (
+            (
+                "fields",
+                "960",
+                "order_price",
+            ),
+            ["100", "200"],
+        ),
+        (
+            (
+                "fields",
+                "960",
+                "subfields",
+                0,
+                "s",
+            ),
+            ["100", "200"],
+        ),
+        (
+            (
+                "fields",
+                "960",
+                "subfields",
+                "order_price",
+            ),
+            ["100", "200"],
+        ),
+    ],
+)
+def test_get_examples_from_schema(field, examples):
+    assert get_examples_from_schema(field) == examples
 
 
 def test_MarcError_string_pattern(stub_record):

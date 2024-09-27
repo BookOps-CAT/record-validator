@@ -1,7 +1,32 @@
-from typing import Any, Tuple, Union
+from typing import Any, List, Tuple, Union
 from pydantic_core import ErrorDetails
-from record_validator.parsers import get_examples_from_schema
-from record_validator.constants import AllSubfields
+from record_validator.adapters import FieldAdapter
+from record_validator.constants import AllFields, AllSubfields
+
+
+def get_examples_from_schema(loc: tuple) -> Union[List[str], None]:
+    field = [
+        i
+        for i in loc
+        if isinstance(i, str) and i not in ["fields", "monograph", "other"]
+    ]
+
+    model = field[0]
+    if model not in AllFields:
+        return None
+    else:
+        model_name = AllFields(model).name
+    if len(field) == 3 and field[1] == "subfields" and len(field[2]) == 1:
+        model_field = f"subfields.{field[2]}"
+        by_alias = True
+    elif len(field) == 2:
+        model_field = field[1]
+        by_alias = False
+    else:
+        model_field = field[2]
+        by_alias = False
+    adapter_schema = FieldAdapter.json_schema(by_alias=by_alias)
+    return adapter_schema["$defs"][model_name]["properties"][model_field]["examples"]
 
 
 class MarcError:
