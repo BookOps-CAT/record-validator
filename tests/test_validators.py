@@ -14,6 +14,7 @@ from record_validator.validators import (
     validate_field_values,
     validate_leader,
     validate_order_item_mismatches,
+    get_tag_list,
 )
 
 
@@ -182,6 +183,19 @@ def test_get_subfield_from_code_None(stub_record):
 def test_get_subfield_from_code_other():
     field = ("980", " ", " ", [("a", "foo"), ("b", "bar"), ("c", "baz")])
     assert get_subfield_from_code(field=field, tag="980", code="a") is None
+
+
+def test_get_tag_list(stub_record):
+    assert sorted(get_tag_list(stub_record)) == sorted(
+        ["008", "001", "245", "050", "852", "960", "949", "300", "901", "910", "980"]
+    )
+
+
+def test_get_tag_list_dict(stub_record):
+    stub_record_dict = stub_record.as_dict()
+    assert sorted(get_tag_list(stub_record_dict["fields"])) == sorted(
+        ["008", "001", "245", "050", "852", "960", "949", "300", "901", "910", "980"]
+    )
 
 
 def test_get_order_item_list_marc(stub_record):

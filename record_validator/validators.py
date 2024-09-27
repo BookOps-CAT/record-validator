@@ -112,6 +112,15 @@ def get_subfield_from_code(
         return subfields
 
 
+def get_tag_list(fields: list) -> list:
+    all_fields = []
+    if all(isinstance(i, dict) for i in fields):
+        all_fields.extend([key for i in fields for key in i.keys()])
+    elif all(isinstance(i, MarcField) for i in fields):
+        all_fields.extend([i.tag for i in fields])
+    return all_fields
+
+
 def validate_fields(self: list) -> list:
     validation_errors = []
     field_validation_errors = validate_field_values(self)
