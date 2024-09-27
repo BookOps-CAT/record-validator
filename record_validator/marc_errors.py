@@ -38,13 +38,13 @@ class MarcError:
                 "item_location",
                 "item_type",
             )
-        elif self.type == "missing" and self.original_error["loc"] == ("fields",):
-            return (
-                "fields",
-                self.input,
-            )
+        if (
+            self.type == "missing"
+            and self.original_error["msg"] == f"Field required: {self.input}"
+        ):
+            return tuple([i for i in self.original_error["loc"]] + [self.input])
         else:
-            return self.original_error.get("loc")
+            return self.original_error["loc"]
 
     def _get_msg(self):
         if self.ctx is not None and "pattern" in self.ctx:
