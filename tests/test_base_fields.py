@@ -21,8 +21,8 @@ def test_get_control_field_input_dict(stub_record):
     stub_record_dict = stub_record.as_dict()
     field = stub_record_dict["fields"][0]
     parsed_field = get_control_field_input(field)
-    assert parsed_field["tag"] == "008"
-    assert parsed_field["value"] == "190306s2017    ht a   j      000 1 hat d"
+    assert parsed_field["tag"] == "001"
+    assert parsed_field["value"] == "on1381158740"
 
 
 @pytest.mark.parametrize(

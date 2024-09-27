@@ -63,11 +63,10 @@ class MarcError:
                 "item_type",
             )
         if (
-            self.type == "missing"
-            and self.original_error["msg"] == f"Field required: {self.input}"
+            self.type == "missing" and "Field required:" in self.original_error["msg"]
         ) or (
             self.type == "extra_forbidden"
-            and self.original_error["msg"] == f"Extra field:  {self.input}"
+            and "Extra field:" in self.original_error["msg"]
         ):
             return tuple([i for i in self.original_error["loc"]] + [self.input])
         else:
@@ -96,7 +95,7 @@ class MarcError:
         if self.type == "order_item_mismatch":
             return ("960$t", "949_$l", "949_$t")
         if self.type == "extra_forbidden":
-            locs = [i for i in self.loc if isinstance(i, str)]
+            locs = [str(i) for i in self.loc]
         else:
             locs = [i for i in self.loc if i != "subfields" and isinstance(i, str)]
         for i in locs:

@@ -58,14 +58,14 @@ def test_get_order_item_list_marc(stub_record):
     assert sorted([i["item_location"] for i in parsed_data]) == sorted(["rcmf2"])
 
 
-def test_get_order_item_list_multiple(stub_record_with_dupes):
-    fields = stub_record_with_dupes.fields
+def test_get_order_item_list_multiple(stub_record_multiple_items):
+    fields = stub_record_multiple_items.fields
     parsed_data = get_order_item_list(fields)
     assert len(parsed_data) == 2
     assert [i["item_type"] for i in parsed_data] == ["55", "55"]
     assert [i["order_location"] for i in parsed_data] == ["MAF", "MAF"]
     assert sorted([i["item_location"] for i in parsed_data]) == sorted(
-        ["rcmf2", "rc2ma"]
+        ["rcmf2", "rcmf2"]
     )
 
 
@@ -93,9 +93,8 @@ def test_get_order_item_list_dict(stub_record):
     assert sorted([i["item_location"] for i in parsed_data]) == sorted(["rcmf2"])
 
 
-def test_get_order_item_list_dict_multiple(stub_record, stub_item):
-    stub_record.add_field(stub_item)
-    stub_record_dict = stub_record.as_dict()
+def test_get_order_item_list_dict_multiple(stub_record_multiple_items):
+    stub_record_dict = stub_record_multiple_items.as_dict()
     fields = stub_record_dict["fields"]
     parsed_data = get_order_item_list(fields)
     item_fields = [i for i in fields if "949" in i]
