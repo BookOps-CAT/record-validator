@@ -3,6 +3,44 @@ from record_validator.constants import AllFields, AllSubfields, ValidOrderItems
 
 
 @pytest.mark.parametrize(
+    "field_name, mapping",
+    [
+        (
+            "call_no",
+            "subfields.h",
+        ),
+        (
+            "invoice_net_price",
+            "subfields.e",
+        ),
+        (
+            "item_type",
+            "subfields.t",
+        ),
+        (
+            "lcc",
+            "subfields.a",
+        ),
+        (
+            "ind1",
+            "ind1",
+        ),
+        (
+            "ind2",
+            "ind2",
+        ),
+        (
+            "tag",
+            "tag",
+        ),
+    ],
+)
+def test_get_alias(field_name, mapping):
+    alias = AllSubfields.get_alias(field_name)
+    assert alias == mapping
+
+
+@pytest.mark.parametrize(
     "tag, model",
     [
         ("001", "ControlField001"),

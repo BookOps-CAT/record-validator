@@ -73,6 +73,14 @@ class AllSubfields(Enum):
     item_call_tag = "z"
     library = "a"
 
+    @staticmethod
+    def get_alias(field_name: str) -> str:
+        if field_name not in AllSubfields.__members__:
+            return field_name
+        else:
+            subfield_mapping = AllSubfields[field_name].value
+            return f"subfields.{subfield_mapping}"
+
 
 class ValidOrderItems(Enum):
     MAB = {"order_location": "MAB", "item_location": "rcmb2", "item_type": "2"}
