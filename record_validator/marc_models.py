@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from pymarc import Field as MarcField
 from pymarc import Leader
 from pydantic.functional_validators import AfterValidator, field_validator
-from record_validator.parsers import validate_fields
+from record_validator.validators import validate_fields
 
 
 class MonographRecord(BaseModel):

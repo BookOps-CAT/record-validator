@@ -3,7 +3,7 @@ import pytest
 from pydantic import ValidationError
 from pymarc import Field as MarcField
 from pymarc import Subfield
-from record_validator.parsers import (
+from record_validator.validators import (
     get_examples_from_schema,
     get_field_tag,
     get_missing_field_list,
