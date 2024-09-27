@@ -1,48 +1,7 @@
-from enum import Enum
 from typing import Any, Tuple, Union
 from pydantic_core import ErrorDetails
 from record_validator.parsers import get_examples_from_schema
-
-
-class MarcEncoding(Enum):
-    """
-    A class to translate fields used in the validator to MARC fields/subfields
-    """
-
-    ind1 = "ind1"
-    ind2 = "ind2"
-    bib_call_no = "852"
-    call_no = "$h"
-    bib_vendor_code = "901"
-    vendor_code = "$a"
-    lc_class = "050"
-    lcc = "$a"
-    order_field = "960"
-    order_price = "$s"
-    order_location = "$t"
-    order_fund = "$u"
-    invoice_field = "980"
-    invoice_date = "$a"
-    invoice_price = "$b"
-    invoice_shipping = "$c"
-    invoice_tax = "$d"
-    invoice_net_price = "$e"
-    invoice_number = "$f"
-    invoice_copies = "$g"
-    item_fields = "949"
-    item_call_tag = "$z"
-    item_call_no = "$a"
-    item_barcode = "$i"
-    item_price = "$p"
-    item_message = "$u"
-    message = "$m"
-    item_vendor_code = "$v"
-    item_agency = "$h"
-    item_location = "$l"
-    item_type = "$t"
-    library_field = "910"
-    library = "$a"
-    subfields = "subfields"
+from record_validator.constants import AllSubfields
 
 
 class MarcError:
@@ -114,11 +73,11 @@ class MarcError:
         else:
             locs = [i for i in self.loc if i != "subfields" and isinstance(i, str)]
         for i in locs:
-            if i in MarcEncoding.__members__:
-                out_loc.append(MarcEncoding[str(i)].value)
+            if i in AllSubfields.__members__:
+                out_loc.append(f"${AllSubfields[str(i)].value}")
             elif len(i) == 1 and not i.isdigit():
                 out_loc.append(f"${i}")
-            elif i == "fields" or i == "value":
+            elif i == "fields" or i == "value" or i == "other" or i == "monograph":
                 pass
             else:
                 out_loc.append(i)
