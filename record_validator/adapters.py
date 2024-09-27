@@ -72,7 +72,8 @@ def get_material_type(fields: list) -> str:
 
 def get_monograph_tag(field: Union[MarcField, dict]) -> str:
     tag = field.tag if isinstance(field, MarcField) else list(field.keys())[0]
-    if tag in AllFields:
+    all_fields = [i.value for i in AllFields]
+    if tag in all_fields:
         return tag
     else:
         return "data_field"
@@ -80,9 +81,10 @@ def get_monograph_tag(field: Union[MarcField, dict]) -> str:
 
 def get_other_tag(field: Union[MarcField, dict]) -> str:
     tag = field.tag if isinstance(field, MarcField) else list(field.keys())[0]
+    all_fields = [i.value for i in AllFields]
     if tag in AllFields.monograph_fields():
         return "data_field"
-    elif tag in AllFields and tag not in AllFields.monograph_fields():
+    elif tag in all_fields and tag not in AllFields.monograph_fields():
         return tag
     else:
         return "data_field"
