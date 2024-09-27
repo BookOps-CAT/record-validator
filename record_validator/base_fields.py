@@ -1,42 +1,7 @@
 from typing import Annotated, Any, Dict, List, Literal, Union
 from pymarc import Field as MarcField
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
-
-
-SUBFIELD_MAPPING = {
-    "call_no": "h",
-    "vendor_code": "a",
-    "invoice_date": "a",
-    "invoice_price": "b",
-    "invoice_shipping": "c",
-    "invoice_tax": "d",
-    "invoice_net_price": "e",
-    "invoice_number": "f",
-    "invoice_copies": "g",
-    "item_call_no": "a",
-    "item_volume": "c",
-    "item_agency": "h",
-    "item_barcode": "i",
-    "item_location": "l",
-    "message": "m",
-    "item_price": "p",
-    "item_type": "t",
-    "item_message": "u",
-    "item_vendor_code": "v",
-    "item_call_tag": "z",
-    "lcc": "a",
-    "library": "a",
-    "order_price": "s",
-    "order_location": "t",
-    "order_fund": "u",
-}
-
-
-def get_alias(field_name: str) -> str:
-    if field_name not in SUBFIELD_MAPPING.keys():
-        return field_name
-    else:
-        return f"subfields.{SUBFIELD_MAPPING[field_name]}"
+from record_validator.constants import AllSubfields
 
 
 def parse_input(input: Union[MarcField, Dict[str, Any]], model: Any) -> Dict[str, Any]:
@@ -108,7 +73,9 @@ class BaseControlField(BaseModel):
 
 class BaseDataField(BaseModel):
     model_config = ConfigDict(
-        populate_by_name=True, loc_by_alias=False, alias_generator=get_alias
+        populate_by_name=True,
+        loc_by_alias=False,
+        alias_generator=AllSubfields.get_alias,
     )
 
     tag: Annotated[str, Field(pattern=r"0[1-9]\d|[1-9]\d\d", exclude=True)]

@@ -4,48 +4,9 @@ from pymarc import Field as MarcField
 from record_validator.base_fields import (
     BaseControlField,
     BaseDataField,
-    get_alias,
     parse_input,
 )
 from record_validator.field_models import BibCallNo
-
-
-@pytest.mark.parametrize(
-    "field_name, mapping",
-    [
-        (
-            "call_no",
-            "subfields.h",
-        ),
-        (
-            "invoice_net_price",
-            "subfields.e",
-        ),
-        (
-            "item_type",
-            "subfields.t",
-        ),
-        (
-            "lcc",
-            "subfields.a",
-        ),
-        (
-            "ind1",
-            "ind1",
-        ),
-        (
-            "ind2",
-            "ind2",
-        ),
-        (
-            "tag",
-            "tag",
-        ),
-    ],
-)
-def test_get_alias(field_name, mapping):
-    alias = get_alias(field_name)
-    assert alias == mapping
 
 
 def test_parse_input_marc(stub_record):
