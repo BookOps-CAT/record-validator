@@ -233,7 +233,7 @@ def test_MarcError_string_pattern(stub_record):
         RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
-    assert error.loc == ("fields", "852", "call_no")
+    assert error.loc == ("fields", "monograph", "852", "call_no")
     assert error.input == "ReCAP-24-119100"
     assert isinstance(error.ctx, dict)
     assert error.type == "string_pattern_mismatch"
@@ -252,6 +252,7 @@ def test_MarcError_missing_field(stub_record):
     assert len(e.value.errors()) == 1
     assert error.loc == (
         "fields",
+        "monograph",
         "960",
         "order_location",
     )
@@ -277,6 +278,7 @@ def test_MarcError_missing_entire_field(stub_record):
     assert len(e.value.errors()) == 1
     assert error.loc == (
         "fields",
+        "monograph",
         "980",
     )
     assert error.ctx is None
@@ -291,7 +293,7 @@ def test_MarcError_missing_subfield(stub_record):
         RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
-    assert error.loc == ("fields", "960", "order_location")
+    assert error.loc == ("fields", "monograph", "960", "order_location")
     assert error.type == "missing"
     assert error.input == {
         "ind1": " ",
@@ -313,7 +315,7 @@ def test_MarcError_literal(stub_record):
         RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
-    assert error.loc == ("fields", "960", "order_location")
+    assert error.loc == ("fields", "monograph", "960", "order_location")
     assert error.input == "foo"
     assert isinstance(error.ctx, dict)
     assert error.type == "literal_error"
@@ -341,7 +343,7 @@ def test_MarcError_literal_indicator_error(stub_record):
         RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
-    assert error.loc == ("fields", "960", "ind1")
+    assert error.loc == ("fields", "monograph", "960", "ind1")
     assert error.input == "7"
     assert isinstance(error.ctx, dict)
     assert error.type == "literal_error"
@@ -366,6 +368,7 @@ def test_MarcError_lcc_indicator_error(stub_record):
     assert len(e.value.errors()) == 1
     assert error.loc == (
         "fields",
+        "monograph",
         "050",
     )
     assert error.input == [" ", "0"]
@@ -393,6 +396,7 @@ def test_MarcError_extra_fields(stub_record):
     assert len(string_type_error) == 1
     assert error.loc == (
         "fields",
+        "monograph",
         "003",
         "ind1",
     )
@@ -436,7 +440,10 @@ def test_MarcError_string_type(stub_record):
     errors_loc_marc = [i.loc_marc for i in errors]
     assert len(errors) == 2
     assert sorted(error_locs) == sorted(
-        [("fields", "960", "subfields", 0, "s"), ("fields", "960", "order_price")]
+        [
+            ("fields", "monograph", "960", "subfields", 0, "s"),
+            ("fields", "monograph", "960", "order_price"),
+        ]
     )
     assert all(isinstance(i.input, float) for i in errors)
     assert error_types == ["string_type", "string_type"]

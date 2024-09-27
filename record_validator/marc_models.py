@@ -1,10 +1,15 @@
 """This module contains pydantic models for validating vendor-provided MARC records."""
 
 from typing import Annotated, Dict, List, Union
-from pydantic import BaseModel, Field, ConfigDict
-from pymarc import Field as MarcField
+from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag
 from pydantic.functional_validators import AfterValidator, BeforeValidator
-from record_validator.validators import validate_leader, validate_monograph
+from pymarc import Field as MarcField
+from record_validator.validators import (
+    validate_leader,
+    validate_monograph,
+    validate_other,
+)
+from record_validator.adapters import get_material_type
 
 RecordFields = Union[
     List[MarcField],
@@ -13,12 +18,7 @@ RecordFields = Union[
 
 
 class RecordModel(BaseModel):
-    """
-    A class to define a valid, full MARC record for a monograph.
-
-    Fields marked with the annotation `Field(exclude=True)` are not included when
-    serializing the model.
-    """
+    """A class to define a valid, full MARC record."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -31,4 +31,12 @@ class RecordModel(BaseModel):
         ),
         BeforeValidator(validate_leader),
     ]
-    fields: Annotated[RecordFields, AfterValidator(validate_monograph)]
+    fields: Annotated[
+        Union[
+            Annotated[
+                RecordFields, AfterValidator(validate_monograph), Tag("monograph")
+            ],
+            Annotated[RecordFields, AfterValidator(validate_other), Tag("other")],
+        ],
+        Discriminator(get_material_type),
+    ]
