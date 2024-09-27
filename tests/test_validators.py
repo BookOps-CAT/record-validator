@@ -4,6 +4,8 @@ from pydantic import ValidationError
 from pymarc import Field as MarcField
 from pymarc import Subfield
 from record_validator.validators import (
+    get_missing_fields,
+    get_extra_fields,
     get_field_tag,
     get_missing_field_list,
     get_order_item_list,
@@ -13,6 +15,39 @@ from record_validator.validators import (
     validate_leader,
     validate_order_item_mismatches,
 )
+
+
+@pytest.mark.parametrize("type, expected", [("monograph", ["901"]), ("other", ["901"])])
+def test_get_missing_fields(type, expected):
+    missing_fields = get_missing_fields(
+        tag_list=["001", "008", "050", "910", "852", "980", "960", "949"],
+        material_type=type,
+    )
+    assert len(missing_fields) == 1
+    assert missing_fields == expected
+
+
+@pytest.mark.parametrize(
+    "type, expected", [("monograph", []), ("other", ["852", "949"])]
+)
+def test_get_extra_fields(type, expected):
+    extra_fields = get_extra_fields(
+        tag_list=[
+            "001",
+            "008",
+            "050",
+            "910",
+            "852",
+            "980",
+            "960",
+            "949",
+            "901",
+            "245",
+            "300",
+        ],
+        material_type=type,
+    )
+    assert extra_fields == expected
 
 
 @pytest.mark.parametrize(

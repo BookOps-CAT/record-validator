@@ -35,6 +35,21 @@ def get_field_tag(field: Union[MarcField, dict]) -> str:
         return "data_field"
 
 
+def get_extra_fields(tag_list: list, material_type: str) -> List[str]:
+    if material_type == "monograph":
+        return []
+    monograph_fields = AllFields.monograph_fields()
+    return [i for i in monograph_fields if i in tag_list]
+
+
+def get_missing_fields(tag_list: list, material_type: str) -> List[str]:
+    if material_type == "monograph":
+        required_fields = AllFields.monograph_fields() + AllFields.required_fields()
+    else:
+        required_fields = AllFields.required_fields()
+    return [i for i in required_fields if i not in tag_list]
+
+
 def get_missing_field_list(fields: list) -> list:
     required_fields = AllFields.monograph_fields() + AllFields.required_fields()
     if all(isinstance(i, dict) for i in fields):
