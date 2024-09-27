@@ -10,9 +10,8 @@ def get_examples_from_schema(loc: tuple) -> Union[List[str], None]:
         for i in loc
         if isinstance(i, str) and i not in ["fields", "monograph", "other"]
     ]
-
     model = field[0]
-    if model not in AllFields:
+    if model not in [i.value for i in AllFields]:
         return None
     else:
         model_name = AllFields(model).name
