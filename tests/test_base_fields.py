@@ -4,15 +4,15 @@ from pymarc import Field as MarcField
 from record_validator.base_fields import (
     BaseControlField,
     BaseDataField,
-    parse_input,
+    get_data_field_input,
 )
 from record_validator.field_models import BibCallNo
 
 
-def test_parse_input_marc(stub_record):
+def test_get_data_field_input_marc(stub_record):
     field = stub_record.get("852")
-    parsed_field = parse_input(field, BaseDataField)
-    parsed_bib_call_no = parse_input(field, BibCallNo)
+    parsed_field = get_data_field_input(field, BaseDataField)
+    parsed_bib_call_no = get_data_field_input(field, BibCallNo)
     assert parsed_field["tag"] == "852"
     assert parsed_field["ind1"] == "8"
     assert parsed_field["ind2"] == " "
@@ -24,10 +24,10 @@ def test_parse_input_marc(stub_record):
     assert parsed_field["subfields"] == parsed_bib_call_no["subfields"]
 
 
-def test_parse_input_dict(stub_record):
+def test_get_data_field_input_dict(stub_record):
     stub_record_dict = stub_record.as_dict()
     field = stub_record_dict["fields"][-1]
-    parsed_field = parse_input(field, BaseDataField)
+    parsed_field = get_data_field_input(field, BaseDataField)
     assert parsed_field["tag"] == "980"
     assert parsed_field["ind1"] == " "
     assert parsed_field["ind2"] == " "
@@ -46,8 +46,8 @@ def test_parse_input_dict(stub_record):
     "data",
     [[], (960, "", ""), "960", {"960": "foo"}],
 )
-def test_parse_input_errors(data):
-    parsed_data = parse_input(data, BaseDataField)
+def test_get_data_field_input_errors(data):
+    parsed_data = get_data_field_input(data, BaseDataField)
     assert parsed_data == data
 
 

@@ -4,32 +4,31 @@ from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_valid
 from record_validator.constants import AllSubfields
 
 
-def parse_input(input: Union[MarcField, Dict[str, Any]], model: Any) -> Dict[str, Any]:
+def get_data_field_input(
+    input: Union[MarcField, Dict[str, Any]], model: Any
+) -> Dict[str, Any]:
     if not isinstance(input, (MarcField, dict)):
         return input
-    if isinstance(input, dict):
+    elif isinstance(input, dict):
         tag = next(iter(input)) if "tag" not in input else input["tag"]
         data = input[tag] if "tag" not in input else input
         if any(loc not in data for loc in ["subfields", "ind1", "ind2"]):
             return input
         ind1, ind2, subfields = data["ind1"], data["ind2"], data["subfields"]
     else:
-        tag = input.tag
-        ind1 = input.indicator1
-        ind2 = input.indicator2
+        tag, ind1, ind2 = input.tag, input.indicator1, input.indicator2
         subfields = [{i[0]: i[1]} for i in input.subfields]
-
     if not isinstance(subfields, list) or not all(
         isinstance(i, dict) for i in subfields
     ):
         return {"tag": tag, "ind1": ind1, "ind2": ind2, "subfields": subfields}
-    sorted_subfields = sorted([i for i in subfields], key=lambda x: list(x.keys())[0])
-    out = {"tag": tag, "ind1": ind1, "ind2": ind2, "subfields": sorted_subfields}
-    extra_fields = [i for i in model.model_fields if i not in out.keys()]
-    for field in extra_fields:
+    out = {"tag": tag, "ind1": ind1, "ind2": ind2}
+    out["subfields"] = sorted([i for i in subfields], key=lambda x: list(x.keys())[0])
+    other_fields = [i for i in model.model_fields if i not in out.keys()]
+    for field in other_fields:
         alias = model.model_config["alias_generator"](field)
         nested_key = alias.split("subfields.")[1]
-        for subfield in sorted_subfields:
+        for subfield in out["subfields"]:
             if nested_key in subfield:
                 out.update({field: subfield[nested_key]})
                 continue
@@ -86,10 +85,7 @@ class BaseDataField(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def parse_input(cls, input: Any) -> Any:
-        if isinstance(input, (MarcField, dict)):
-            return parse_input(input, cls)
-        else:
-            return input
+        return get_data_field_input(input, cls)
 
     @model_serializer(mode="plain")
     def serialize_data_field(
