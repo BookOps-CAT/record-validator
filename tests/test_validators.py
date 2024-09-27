@@ -7,6 +7,7 @@ from record_validator.validators import (
     get_missing_fields,
     get_extra_fields,
     get_field_tag,
+    validate_field_list,
     get_missing_field_list,
     get_order_item_list,
     get_subfield_from_code,
@@ -281,6 +282,21 @@ def test_get_order_item_list_dict_error():
     with pytest.raises(AssertionError) as e:
         get_order_item_list(fields)
     assert str(e.value) == "Expected 1 order location, got 2"
+
+
+@pytest.mark.parametrize(
+    "type, field, error",
+    [("monograph", "852", "Field required"), ("other", "949", "Extra field")],
+)
+def test_validate_field_list(type, field, error):
+    tags = ["001", "008", "050", "910", "980", "901", "960", "949", "245", "300"]
+    errors = []
+    with does_not_raise():
+        errors.extend(validate_field_list(tag_list=tags, material_type=type))
+    assert len(errors) == 1
+    assert isinstance(errors, list)
+    assert str(errors[0]["type"]) == f"{error}: {field}"
+    assert errors[0]["input"] == field
 
 
 def test_validate_fields(stub_record):

@@ -121,6 +121,23 @@ def get_tag_list(fields: list) -> list:
     return all_fields
 
 
+def validate_field_list(tag_list: list, material_type: str) -> list:
+    extra_fields = [
+        InitErrorDetails(
+            type=PydanticCustomError("extra_forbidden", f"Extra field: {tag}"),
+            input=tag,
+        )
+        for tag in get_extra_fields(tag_list, material_type)
+    ]
+    missing_fields = [
+        InitErrorDetails(
+            type=PydanticCustomError("missing", f"Field required: {tag}"), input=tag
+        )
+        for tag in get_missing_fields(tag_list, material_type)
+    ]
+    return extra_fields + missing_fields
+
+
 def validate_fields(self: list) -> list:
     validation_errors = []
     field_validation_errors = validate_field_values(self)
