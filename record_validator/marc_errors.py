@@ -1,48 +1,31 @@
-from enum import Enum
-from typing import Any, Tuple, Union
+from typing import Any, List, Tuple, Union
 from pydantic_core import ErrorDetails
-from record_validator.parsers import get_examples_from_schema
+from record_validator.adapters import FieldAdapter
+from record_validator.constants import AllFields, AllSubfields
 
 
-class MarcEncoding(Enum):
-    """
-    A class to translate fields used in the validator to MARC fields/subfields
-    """
-
-    ind1 = "ind1"
-    ind2 = "ind2"
-    bib_call_no = "852"
-    call_no = "$h"
-    bib_vendor_code = "901"
-    vendor_code = "$a"
-    lc_class = "050"
-    lcc = "$a"
-    order_field = "960"
-    order_price = "$s"
-    order_location = "$t"
-    order_fund = "$u"
-    invoice_field = "980"
-    invoice_date = "$a"
-    invoice_price = "$b"
-    invoice_shipping = "$c"
-    invoice_tax = "$d"
-    invoice_net_price = "$e"
-    invoice_number = "$f"
-    invoice_copies = "$g"
-    item_fields = "949"
-    item_call_tag = "$z"
-    item_call_no = "$a"
-    item_barcode = "$i"
-    item_price = "$p"
-    item_message = "$u"
-    message = "$m"
-    item_vendor_code = "$v"
-    item_agency = "$h"
-    item_location = "$l"
-    item_type = "$t"
-    library_field = "910"
-    library = "$a"
-    subfields = "subfields"
+def get_examples_from_schema(loc: tuple) -> Union[List[str], None]:
+    field = [
+        i
+        for i in loc
+        if isinstance(i, str) and i not in ["fields", "monograph", "other"]
+    ]
+    model = field[0]
+    if model not in [i.value for i in AllFields]:
+        return None
+    else:
+        model_name = AllFields(model).name
+    if len(field) == 3 and field[1] == "subfields" and len(field[2]) == 1:
+        model_field = f"subfields.{field[2]}"
+        by_alias = True
+    elif len(field) == 2:
+        model_field = field[1]
+        by_alias = False
+    else:
+        model_field = field[2]
+        by_alias = False
+    adapter_schema = FieldAdapter.json_schema(by_alias=by_alias)
+    return adapter_schema["$defs"][model_name]["properties"][model_field]["examples"]
 
 
 class MarcError:
@@ -79,13 +62,13 @@ class MarcError:
                 "item_location",
                 "item_type",
             )
-        elif self.type == "missing" and self.original_error["loc"] == ("fields",):
-            return (
-                "fields",
-                self.input,
-            )
+        if (
+            self.type == "missing"
+            and self.original_error["msg"] == f"Field required: {self.input}"
+        ):
+            return tuple([i for i in self.original_error["loc"]] + [self.input])
         else:
-            return self.original_error.get("loc")
+            return self.original_error["loc"]
 
     def _get_msg(self):
         if self.ctx is not None and "pattern" in self.ctx:
@@ -114,11 +97,11 @@ class MarcError:
         else:
             locs = [i for i in self.loc if i != "subfields" and isinstance(i, str)]
         for i in locs:
-            if i in MarcEncoding.__members__:
-                out_loc.append(MarcEncoding[str(i)].value)
+            if i in AllSubfields.__members__:
+                out_loc.append(f"${AllSubfields[str(i)].value}")
             elif len(i) == 1 and not i.isdigit():
                 out_loc.append(f"${i}")
-            elif i == "fields" or i == "value":
+            elif i == "fields" or i == "value" or i == "other" or i == "monograph":
                 pass
             else:
                 out_loc.append(i)
@@ -139,13 +122,13 @@ class MarcValidationError:
 
     def _get_missing_fields(self) -> list:
         return [
-            i
+            i.loc_marc
             for i in self.errors
             if i.type == "missing" or i.type == "missing_required_field"
         ]
 
     def _get_extra_fields(self) -> list:
-        return [i for i in self.errors if i.type == "extra_forbidden"]
+        return [i.loc_marc for i in self.errors if i.type == "extra_forbidden"]
 
     def _get_invalid_fields(self) -> list:
         invalid_fields = [
@@ -174,11 +157,10 @@ class MarcValidationError:
         return [i.input for i in self.errors if i.type == "order_item_mismatch"]
 
     def to_dict(self):
-        out_dict = {
+        return {
             "error_count": self.error_count,
-            "missing_fields": [i.loc_marc for i in self.missing_fields],
-            "extra_fields": [i.loc_marc for i in self.extra_fields],
+            "missing_fields": self.missing_fields,
+            "extra_fields": self.extra_fields,
             "invalid_fields": self.invalid_fields,
             "order_item_mismatches": self.order_item_mismatches,
         }
-        return out_dict

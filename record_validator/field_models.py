@@ -25,7 +25,7 @@ class BibVendorCode(BaseDataField):
     subfields: List[Dict[str, str]]
     vendor_code: Annotated[
         Literal["EVP", "AUXAM", "LEILA"],
-        Field(exclude=True),
+        Field(exclude=True, examples=["EVP", "AUXAM", "LEILA"]),
     ]
 
 
@@ -156,7 +156,7 @@ class ItemField(BaseDataField):
     ] = None
     item_agency: Annotated[
         Literal["43"],
-        Field(exclude=True),
+        Field(exclude=True, examples=["43"]),
     ]
     item_barcode: Annotated[
         str,
@@ -181,7 +181,7 @@ class ItemField(BaseDataField):
                 "rc2cf",
             ]
         ],
-        Field(exclude=True, default=None),
+        Field(exclude=True, default=None, examples=["rcmb2", "rcmf2"]),
     ]
     message: Optional[Annotated[str, Field(exclude=True)]] = None
     item_price: Annotated[
@@ -198,11 +198,11 @@ class ItemField(BaseDataField):
     item_message: Optional[Annotated[str, Field(exclude=True)]] = None
     item_vendor_code: Annotated[
         Literal["EVP", "AUXAM", "LEILA"],
-        Field(exclude=True),
+        Field(exclude=True, examples=["EVP", "AUXAM", "LEILA"]),
     ]
     item_call_tag: Annotated[
         Literal["8528"],
-        Field(exclude=True),
+        Field(exclude=True, examples=["8528"]),
     ]
 
 
@@ -231,8 +231,21 @@ class LibraryField(BaseDataField):
     subfields: List[Dict[str, str]]
     library: Annotated[
         Literal["RL", "BL", "BPL"],
-        Field(exclude=True),
+        Field(exclude=True, examples=["RL", "BL", "BPL"]),
     ]
+
+
+class MonographOtherField(BaseDataField):
+    tag: Annotated[
+        str,
+        Field(
+            pattern=r"0[1-9]{2}|0[1-46-9]0|^[1-7]\d\d|8[0-46-9]\d|85[013-9]|90[02-9]|9[168][1-9]|94[0-8]|9[23579]\d",  # noqa: E501
+            examples=["100", "710", "650", "245"],
+        ),
+    ]
+    ind1: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
+    ind2: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
+    subfields: List[Any]
 
 
 class OrderField(BaseDataField):
@@ -264,7 +277,7 @@ class OtherDataField(BaseDataField):
     tag: Annotated[
         str,
         Field(
-            pattern=r"0[1-9]{2}|0[1-46-9]0|^[1-7]\d\d|8[0-46-9]\d|85[013-9]|90[02-9]|9[168][1-9]|94[0-8]|9[23579]\d",  # noqa: E501
+            pattern=r"0[1-9]{2}|0[1-46-9]0|^[1-8]\d\d|90[02-9]|9[168][1-9]|9[2-579]\d",  # noqa: E501
             examples=["100", "710", "650", "245"],
         ),
     ]
