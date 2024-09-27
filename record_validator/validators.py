@@ -116,6 +116,11 @@ def validate_field_list(tag_list: list, material_type: str) -> list:
     return extra_fields + missing_fields
 
 
+def validate_leader(input: Union[str, Leader]) -> str:
+    """Validate the leader."""
+    return str(input)
+
+
 def validate_monograph(fields: list) -> list:
     """Validate MARC record fields."""
     validation_errors = []
@@ -161,8 +166,3 @@ def validate_other(fields: list) -> list:
         )
     else:
         return fields
-
-
-def validate_leader(input: Union[str, Leader]) -> str:
-    """Validate the leader."""
-    return str(input)
