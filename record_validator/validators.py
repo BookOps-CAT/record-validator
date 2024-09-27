@@ -1,38 +1,9 @@
-from typing import Annotated, Any, Dict, List, Union
+from typing import Any, Dict, List, Union
 from pymarc import Field as MarcField
 from pymarc import Leader
-from pydantic import Discriminator, Tag, TypeAdapter
 from pydantic_core import PydanticCustomError, ValidationError, InitErrorDetails
-from record_validator.field_models import (
-    BibCallNo,
-    BibVendorCode,
-    ControlField001,
-    ControlField003,
-    ControlField005,
-    ControlField006,
-    ControlField007,
-    ControlField008,
-    InvoiceField,
-    ItemField,
-    LCClass,
-    LibraryField,
-    OrderField,
-    OtherDataField,
-)
+from record_validator.adapters import MonographRecordAdapter, OtherRecordAdapter
 from record_validator.constants import AllFields, ValidOrderItems
-
-
-def get_field_tag(field: Union[MarcField, dict]) -> str:
-    tag = field.tag if isinstance(field, MarcField) else list(field.keys())[0]
-    if (
-        tag
-        in AllFields.monograph_fields()
-        + AllFields.required_fields()
-        + AllFields.control_fields()
-    ):
-        return tag
-    else:
-        return "data_field"
 
 
 def get_extra_fields(tag_list: list, material_type: str) -> List[str]:
@@ -48,17 +19,6 @@ def get_missing_fields(tag_list: list, material_type: str) -> List[str]:
     else:
         required_fields = AllFields.required_fields()
     return [i for i in required_fields if i not in tag_list]
-
-
-def get_missing_field_list(fields: list) -> list:
-    required_fields = AllFields.monograph_fields() + AllFields.required_fields()
-    if all(isinstance(i, dict) for i in fields):
-        all_fields = [key for i in fields for key in i.keys()]
-    elif all(isinstance(i, MarcField) for i in fields):
-        all_fields = [i.tag for i in fields]
-    else:
-        all_fields = []
-    return [tag for tag in required_fields if tag not in all_fields]
 
 
 def get_order_item_list(
@@ -138,65 +98,51 @@ def validate_field_list(tag_list: list, material_type: str) -> list:
     return extra_fields + missing_fields
 
 
-def validate_fields(self: list) -> list:
+def validate_monograph(fields: list) -> list:
+    """Validate MARC record fields."""
     validation_errors = []
-    field_validation_errors = validate_field_values(self)
-    validation_errors.extend(field_validation_errors)
-    missing_fields = get_missing_field_list(self)
-    for tag in missing_fields:
-        validation_errors.append(
-            InitErrorDetails(
-                type=PydanticCustomError("missing", f"Field required: {tag}"),
-                input=tag,
-            )
-        )
-    if "949" in missing_fields or "960" in missing_fields:
-        pass
-    elif len(field_validation_errors) > 0 and any(
-        loc in [i["loc"][-1] for i in field_validation_errors]
-        for loc in ["item_location", "item_type", "order_location"]
-    ):
-        pass
-    else:
-        order_item_errors = validate_order_item_mismatches(self)
-        validation_errors.extend(order_item_errors)
-    if len(validation_errors) > 0:
-        raise ValidationError.from_exception_data(
-            title=self.__class__.__name__, line_errors=validation_errors
-        )
-    else:
-        return self
+    tags = get_tag_list(fields)
 
+    validation_errors.extend(validate_field_list(tags, material_type="monograph"))
 
-def validate_field_values(fields: list) -> list:
-    validation_errors = []
-    FieldAdapter: TypeAdapter = TypeAdapter(
-        Annotated[
-            Union[
-                Annotated[BibCallNo, Tag("852")],
-                Annotated[BibVendorCode, Tag("901")],
-                Annotated[InvoiceField, Tag("980")],
-                Annotated[ItemField, Tag("949")],
-                Annotated[LCClass, Tag("050")],
-                Annotated[LibraryField, Tag("910")],
-                Annotated[OrderField, Tag("960")],
-                Annotated[OtherDataField, Tag("data_field")],
-                Annotated[ControlField001, Tag("001")],
-                Annotated[ControlField003, Tag("003")],
-                Annotated[ControlField005, Tag("005")],
-                Annotated[ControlField006, Tag("006")],
-                Annotated[ControlField007, Tag("007")],
-                Annotated[ControlField008, Tag("008")],
-            ],
-            Discriminator(get_field_tag),
-        ]
-    )
     for field in fields:
         try:
-            FieldAdapter.validate_python(field, from_attributes=True)
+            MonographRecordAdapter.validate_python(field, from_attributes=True)
         except ValidationError as e:
             validation_errors.extend(e.errors())
-    return validation_errors
+    if ("960" in tags and "949" in tags) and all(
+        loc not in [i["loc"][-1] for i in validation_errors if "loc" in i]
+        for loc in ["item_location", "item_type", "order_location"]
+    ):
+        order_item_errors = validate_order_item_mismatches(fields)
+        validation_errors.extend(order_item_errors)
+
+    if len(validation_errors) > 0:
+        raise ValidationError.from_exception_data(
+            title=fields.__class__.__name__, line_errors=validation_errors
+        )
+    else:
+        return fields
+
+
+def validate_other(fields: list) -> list:
+    """Validate MARC record fields."""
+    validation_errors = []
+    tags = get_tag_list(fields)
+
+    validation_errors.extend(validate_field_list(tags, material_type="other"))
+
+    for field in fields:
+        try:
+            OtherRecordAdapter.validate_python(field, from_attributes=True)
+        except ValidationError as e:
+            validation_errors.extend(e.errors())
+    if len(validation_errors) > 0:
+        raise ValidationError.from_exception_data(
+            title=fields.__class__.__name__, line_errors=validation_errors
+        )
+    else:
+        return fields
 
 
 def validate_leader(input: Union[str, Leader]) -> str:

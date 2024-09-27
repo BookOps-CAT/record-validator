@@ -1,18 +1,13 @@
 from contextlib import nullcontext as does_not_raise
 import pytest
-from pydantic import ValidationError
 from pymarc import Field as MarcField
 from pymarc import Subfield
 from record_validator.validators import (
     get_missing_fields,
     get_extra_fields,
-    get_field_tag,
     validate_field_list,
-    get_missing_field_list,
     get_order_item_list,
     get_subfield_from_code,
-    validate_fields,
-    validate_field_values,
     validate_leader,
     validate_order_item_mismatches,
     get_tag_list,
@@ -50,98 +45,6 @@ def test_get_extra_fields(type, expected):
         material_type=type,
     )
     assert extra_fields == expected
-
-
-@pytest.mark.parametrize(
-    "tag, expected",
-    [
-        ("245", "data_field"),
-        ("960", "960"),
-        ("949", "949"),
-        ("300", "data_field"),
-        ("008", "008"),
-        ("001", "001"),
-    ],
-)
-def test_get_field_tag_from_dict(tag, expected):
-    field = {tag: {"ind1": " ", "ind2": " ", "subfields": [{"a": "foo"}]}}
-    assert get_field_tag(field) == expected
-
-
-@pytest.mark.parametrize(
-    "tag, expected",
-    [
-        ("245", "data_field"),
-        ("960", "960"),
-        ("949", "949"),
-        ("300", "data_field"),
-        ("008", "008"),
-        ("001", "001"),
-    ],
-)
-def test_get_field_tag_from_marc(stub_record, tag, expected):
-    field = stub_record.get(tag, tag)
-    assert get_field_tag(field) == expected
-
-
-@pytest.mark.parametrize(
-    "delete_fields, expected",
-    [
-        (["008", "245"], []),
-        (["960"], ["960"]),
-        (["949"], ["949"]),
-        (["960", "980"], ["960", "980"]),
-    ],
-)
-def test_get_missing_field_list_from_dict(stub_record, delete_fields, expected):
-    for field in delete_fields:
-        stub_record.remove_fields(field)
-    stub_record_dict = stub_record.as_dict()
-    fields = stub_record_dict["fields"]
-    missing_fields = get_missing_field_list(fields)
-    assert sorted(missing_fields) == sorted(expected)
-
-
-@pytest.mark.parametrize(
-    "delete_fields, expected",
-    [
-        (["008", "245"], []),
-        (["960"], ["960"]),
-        (["949"], ["949"]),
-        (["960", "980"], ["960", "980"]),
-    ],
-)
-def test_get_missing_field_list_from_marc(stub_record, delete_fields, expected):
-    for field in delete_fields:
-        stub_record.remove_fields(field)
-    fields = stub_record.fields
-    missing_fields = get_missing_field_list(fields)
-    assert sorted(missing_fields) == sorted(expected)
-
-
-@pytest.mark.parametrize(
-    "fields",
-    [
-        (
-            "008",
-            "245",
-        ),
-        [],
-        "008, 245",
-    ],
-)
-def test_get_missing_field_list_other(fields):
-    assert sorted(get_missing_field_list(fields)) == sorted(
-        [
-            "852",
-            "901",
-            "050",
-            "910",
-            "960",
-            "980",
-            "949",
-        ]
-    )
 
 
 @pytest.mark.parametrize(
@@ -297,79 +200,6 @@ def test_validate_field_list(type, field, error):
     assert isinstance(errors, list)
     assert str(errors[0]["type"]) == f"{error}: {field}"
     assert errors[0]["input"] == field
-
-
-def test_validate_fields(stub_record):
-    with does_not_raise():
-        validate_fields(stub_record.as_dict()["fields"])
-
-
-def test_validate_fields_invalid_field(stub_record):
-    stub_record["960"].delete_subfield("t")
-    stub_record["960"].add_subfield("t", "foo")
-    with pytest.raises(ValidationError) as e:
-        validate_fields(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "literal_error"
-
-
-def test_validate_fields_missing_field(stub_record):
-    stub_record["960"].delete_subfield("t")
-    with pytest.raises(ValidationError) as e:
-        validate_fields(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "missing"
-
-
-def test_validate_fields_missing_entire_field(stub_record):
-    stub_record.remove_fields("960")
-    with pytest.raises(ValidationError) as e:
-        validate_fields(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "missing"
-
-
-def test_validate_fields_multiple_errors_order_item_mismatch(stub_record):
-    stub_record.remove_fields("852")
-    stub_record["960"].delete_subfield("t")
-    stub_record["960"].add_subfield("t", "PAD")
-    with pytest.raises(ValidationError) as e:
-        validate_fields(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 2
-    assert e.value.errors()[0]["type"] == "missing"
-    assert e.value.errors()[1]["type"] == "order_item_mismatch"
-
-
-def test_validate_fields_order_item_not_checked(stub_record):
-    stub_record["949"].delete_subfield("t")
-    stub_record["949"].add_subfield("t", "2")
-    stub_record["960"].delete_subfield("t")
-    with pytest.raises(ValidationError) as e:
-        validate_fields(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "missing"
-
-
-def test_validate_field_values_missing_field(stub_record):
-    stub_record["960"].delete_subfield("t")
-    errors = []
-    with does_not_raise():
-        errors.extend(validate_field_values(stub_record.as_dict()["fields"]))
-    assert len(errors) == 1
-    assert isinstance(errors, list)
-    assert str(errors[0]["type"]) == "missing"
-
-
-def test_validate_field_values_multiple_errors(stub_record):
-    stub_record["960"].delete_subfield("t")
-    stub_record["949"].delete_subfield("l")
-    stub_record["949"].add_subfield("l", "foo")
-    errors = []
-    with does_not_raise():
-        errors.extend(validate_field_values(stub_record.as_dict()["fields"]))
-    error_types = [i["type"] for i in errors]
-    assert len(errors) == 2
-    assert sorted(error_types) == sorted(["missing", "literal_error"])
 
 
 def test_validate_leader(stub_record):
