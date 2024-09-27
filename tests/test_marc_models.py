@@ -3,11 +3,11 @@ from pydantic import ValidationError
 from contextlib import nullcontext as does_not_raise
 from pymarc import Field as MarcField
 from pymarc import Subfield, Leader, MARCReader
-from record_validator.marc_models import MonographRecord
+from record_validator.marc_models import RecordModel
 
 
-def test_MonographRecord_valid():
-    model = MonographRecord(
+def test_RecordModel_valid():
+    model = RecordModel(
         leader="00000cam a2200000 a 4500",
         fields=[
             {"008": "200101s2001    xx      b    000 0 eng  d"},
@@ -74,25 +74,25 @@ def test_MonographRecord_valid():
     assert list(model.model_dump().keys()) == ["leader", "fields"]
 
 
-def test_MonographRecord_from_marc_valid(stub_record):
+def test_RecordModel_from_marc_valid(stub_record):
     record_1 = stub_record
     record_2 = stub_record.as_marc21()
     reader = MARCReader(record_2)
     record_2 = next(reader)
     assert isinstance(record_1.leader, str)
     assert isinstance(record_2.leader, Leader)
-    model_1 = MonographRecord(leader=record_1.leader, fields=record_1.fields)
-    model_2 = MonographRecord(leader=record_2.leader, fields=record_2.fields)
+    model_1 = RecordModel(leader=record_1.leader, fields=record_1.fields)
+    model_2 = RecordModel(leader=record_2.leader, fields=record_2.fields)
     assert model_1.model_dump().keys() == model_2.model_dump().keys()
 
 
-def test_MonographRecord_from_marc_dict_valid(stub_record):
+def test_RecordModel_from_marc_dict_valid(stub_record):
     record_dict = stub_record.as_dict()
     with does_not_raise():
-        MonographRecord(**record_dict)
+        RecordModel(**record_dict)
 
 
-def test_MonographRecord_from_marc_multiple_items(stub_record):
+def test_RecordModel_from_marc_multiple_items(stub_record):
     stub_record.add_field(
         MarcField(
             tag="949",
@@ -110,10 +110,10 @@ def test_MonographRecord_from_marc_multiple_items(stub_record):
         )
     )
     with does_not_raise():
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
 
 
-def test_MonographRecord_from_marc_dict_multiple_items(stub_record):
+def test_RecordModel_from_marc_dict_multiple_items(stub_record):
     stub_record.add_field(
         MarcField(
             tag="949",
@@ -132,10 +132,10 @@ def test_MonographRecord_from_marc_dict_multiple_items(stub_record):
     )
     record_dict = stub_record.as_dict()
     with does_not_raise():
-        MonographRecord(**record_dict)
+        RecordModel(**record_dict)
 
 
-def test_MonographRecord_from_marc_invalid(stub_record):
+def test_RecordModel_from_marc_invalid(stub_record):
     stub_record.remove_fields("901", "852")
     stub_record.add_field(
         MarcField(
@@ -145,14 +145,14 @@ def test_MonographRecord_from_marc_invalid(stub_record):
         )
     )
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     assert len(e.value.errors()) == 2
     assert sorted([i["type"] for i in e.value.errors()]) == sorted(
         ["missing", "string_pattern_mismatch"]
     )
 
 
-def test_MonographRecord_invalid():
+def test_RecordModel_invalid():
     record_dict = {
         "leader": "00000cam a2200000 a 4500",
         "fields": [
@@ -210,22 +210,22 @@ def test_MonographRecord_invalid():
         ],
     }
     with pytest.raises(ValidationError) as e:
-        MonographRecord(**record_dict)
+        RecordModel(**record_dict)
     assert len(e.value.errors()) == 3
     assert sorted([i["type"] for i in e.value.errors()]) == sorted(
         ["literal_error", "string_pattern_mismatch", "missing"]
     )
 
 
-def test_MonographRecord_missing_field(stub_record):
+def test_RecordModel_missing_field(stub_record):
     stub_record.remove_fields("852")
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     assert len(e.value.errors()) == 1
     assert sorted([i["type"] for i in e.value.errors()]) == sorted(["missing"])
 
 
-def test_MonographRecord_string_pattern_mismatch(stub_record):
+def test_RecordModel_string_pattern_mismatch(stub_record):
     stub_record.remove_fields("852")
     stub_record.add_field(
         MarcField(
@@ -235,14 +235,14 @@ def test_MonographRecord_string_pattern_mismatch(stub_record):
         )
     )
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     assert len(e.value.errors()) == 1
     assert sorted([i["type"] for i in e.value.errors()]) == sorted(
         ["string_pattern_mismatch"]
     )
 
 
-def test_MonographRecord_literal_error(stub_record):
+def test_RecordModel_literal_error(stub_record):
     stub_record.remove_fields("901")
     stub_record.add_field(
         MarcField(
@@ -252,7 +252,7 @@ def test_MonographRecord_literal_error(stub_record):
         )
     )
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     assert len(e.value.errors()) == 1
     assert sorted([i["type"] for i in e.value.errors()]) == sorted(["literal_error"])
 
@@ -265,7 +265,7 @@ def test_MonographRecord_literal_error(stub_record):
         ("foobarfoobarfoobarfoobar", "string_pattern_mismatch"),
     ],
 )
-def test_MonographRecord_invalid_leader(
+def test_RecordModel_invalid_leader(
     stub_record,
     leader_value,
     leader_error,
@@ -273,7 +273,7 @@ def test_MonographRecord_invalid_leader(
     record_dict = stub_record.as_dict()
     record_dict["leader"] = leader_value
     with pytest.raises(ValidationError) as e:
-        MonographRecord(**record_dict)
+        RecordModel(**record_dict)
     assert len(e.value.errors()) == 1
     assert e.value.errors()[0]["type"] == leader_error
 
@@ -282,14 +282,14 @@ def test_MonographRecord_invalid_leader(
     "fields_value",
     [{}, None],
 )
-def test_MonographRecord_invalid_fields(
+def test_RecordModel_invalid_fields(
     stub_record,
     fields_value,
 ):
     record_dict = stub_record.as_dict()
     record_dict["fields"] = fields_value
     with pytest.raises(ValidationError) as e:
-        MonographRecord(**record_dict)
+        RecordModel(**record_dict)
     assert len(e.value.errors()) == 2
     assert e.value.errors()[0]["type"] == "list_type"
 
@@ -309,7 +309,7 @@ def test_MonographRecord_invalid_fields(
         ("MAG", "rcmg2", None),
     ],
 )
-def test_MonographRecord_valid_location_combos(
+def test_RecordModel_valid_location_combos(
     stub_record, order_location_value, item_location_value, item_type_value
 ):
     stub_record["949"].delete_subfield("l")
@@ -321,15 +321,15 @@ def test_MonographRecord_valid_location_combos(
     if item_type_value is not None:
         stub_record["949"].add_subfield("t", item_type_value)
     with does_not_raise():
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
 
 
-def test_MonographRecord_order_item_data_not_checked(stub_record):
+def test_RecordModel_order_item_data_not_checked(stub_record):
     stub_record["949"].delete_subfield("t")
     stub_record["949"].add_subfield("t", "2")
     stub_record["960"].delete_subfield("t")
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error_types = [error["type"] for error in e.value.errors()]
     assert len(e.value.errors()) == 1
     assert "order_item_mismatch" not in error_types
@@ -346,7 +346,7 @@ def test_MonographRecord_order_item_data_not_checked(stub_record):
         ("MAL", "rcmg2", "55"),
     ],
 )
-def test_MonographRecord_invalid_order_item_data(
+def test_RecordModel_invalid_order_item_data(
     stub_record, order_location_value, item_location_value, item_type_value
 ):
     stub_record["949"].delete_subfield("l")
@@ -358,24 +358,24 @@ def test_MonographRecord_invalid_order_item_data(
     if item_type_value is not None:
         stub_record["949"].add_subfield("t", item_type_value)
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     assert len(e.value.errors()) == 1
     assert e.value.errors()[0]["type"] == "order_item_mismatch"
 
 
-def test_MonographRecord_invalid_order_item_data_multiple(stub_record, stub_item):
+def test_RecordModel_invalid_order_item_data_multiple(stub_record, stub_item):
     stub_record["949"].delete_subfield("l")
     stub_record["949"].add_subfield("l", "rcmg2")
     stub_record["960"].delete_subfield("t")
     stub_record["960"].add_subfield("t", "MAP")
     stub_record.add_field(stub_item)
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     assert len(e.value.errors()) == 2
     assert e.value.errors()[0]["type"] == "order_item_mismatch"
 
 
-# def test_MonographRecord_invalid_material_type(
+# def test_RecordModel_invalid_material_type(
 #     mock_bib_call_no,
 #     mock_bib_vendor_code,
 #     mock_lc_class,
@@ -385,7 +385,7 @@ def test_MonographRecord_invalid_order_item_data_multiple(stub_record, stub_item
 #     mock_item_fields,
 # ):
 #     with pytest.raises(ValidationError) as e:
-#         MonographRecord(
+#         RecordModel(
 #             leader="00000cam a2200000 a 4500",
 #             fields=[{"245": {"a": "The Title"}}],
 #             bib_call_no=mock_bib_call_no,

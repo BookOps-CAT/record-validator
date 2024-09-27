@@ -7,7 +7,7 @@ from record_validator.marc_errors import (
     MarcError,
     MarcValidationError,
 )
-from record_validator.marc_models import MonographRecord
+from record_validator.marc_models import RecordModel
 
 
 @pytest.mark.parametrize(
@@ -230,7 +230,7 @@ def test_MarcError_string_pattern(stub_record):
         )
     )
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
     assert error.loc == ("fields", "852", "call_no")
@@ -247,7 +247,7 @@ def test_MarcError_string_pattern(stub_record):
 def test_MarcError_missing_field(stub_record):
     stub_record["960"].delete_subfield("t")
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
     assert error.loc == (
@@ -272,7 +272,7 @@ def test_MarcError_missing_field(stub_record):
 def test_MarcError_missing_entire_field(stub_record):
     stub_record.remove_fields("980")
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
     assert error.loc == (
@@ -288,7 +288,7 @@ def test_MarcError_missing_entire_field(stub_record):
 def test_MarcError_missing_subfield(stub_record):
     stub_record["960"].delete_subfield("t")
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
     assert error.loc == ("fields", "960", "order_location")
@@ -310,7 +310,7 @@ def test_MarcError_literal(stub_record):
     stub_record["960"].delete_subfield("t")
     stub_record["960"].add_subfield("t", "foo")
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
     assert error.loc == ("fields", "960", "order_location")
@@ -338,7 +338,7 @@ def test_MarcError_literal_indicator_error(stub_record):
         )
     )
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
     assert error.loc == ("fields", "960", "ind1")
@@ -361,7 +361,7 @@ def test_MarcError_lcc_indicator_error(stub_record):
         )
     )
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
     assert error.loc == (
@@ -384,7 +384,7 @@ def test_MarcError_extra_fields(stub_record):
         {"003": {"ind1": " ", "ind2": " ", "subfields": [{"a": "foo"}]}}
     )
     with pytest.raises(ValidationError) as e:
-        MonographRecord(**record_dict)
+        RecordModel(**record_dict)
     extra_field_errors = [i for i in e.value.errors() if i["type"] == "extra_forbidden"]
     string_type_error = [i for i in e.value.errors() if i["type"] == "string_type"]
     error = MarcError(extra_field_errors[0])
@@ -407,7 +407,7 @@ def test_MarcError_order_item_mismatch(stub_record):
     stub_record["960"].delete_subfield("t")
     stub_record["960"].add_subfield("t", "MAB")
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     error = MarcError(e.value.errors()[0])
     assert len(e.value.errors()) == 1
     assert error.loc == (
@@ -429,7 +429,7 @@ def test_MarcError_string_type(stub_record):
     stub_record["960"].delete_subfield("s")
     stub_record["960"].add_subfield("s", 1.00)
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     errors = [MarcError(i) for i in e.value.errors()]
     error_locs = [i.loc for i in errors]
     error_types = [i.type for i in errors]
@@ -447,7 +447,7 @@ def test_MarcValidationError_literal_error(stub_record):
     stub_record["960"].delete_subfield("t")
     stub_record["960"].add_subfield("t", "foo")
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     errors = MarcValidationError(e.value.errors()).to_dict()
     assert errors["error_count"] == 1
     assert errors["invalid_fields"] == [
@@ -467,7 +467,7 @@ def test_MarcValidationError_string_type(stub_record):
     stub_record["960"].delete_subfield("s")
     stub_record["960"].add_subfield("s", 1.00)
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     errors = MarcValidationError(e.value.errors()).to_dict()
     assert errors["error_count"] == 2
     assert errors["invalid_fields"][0] == {
@@ -490,7 +490,7 @@ def test_MarcValidationError_string_pattern(stub_record):
     stub_record["960"].delete_subfield("s")
     stub_record["960"].add_subfield("s", "1.00")
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     errors = MarcValidationError(e.value.errors()).to_dict()
     assert errors["error_count"] == 1
     assert errors["invalid_fields"] == [
@@ -512,7 +512,7 @@ def test_MarcValidationError_extra_fields(stub_record):
         {"003": {"ind1": " ", "ind2": " ", "subfields": [{"a": "foo"}]}}
     )
     with pytest.raises(ValidationError) as e:
-        MonographRecord(**record_dict)
+        RecordModel(**record_dict)
     errors = MarcValidationError(e.value.errors()).to_dict()
     assert errors["error_count"] == 4
     assert len(errors["missing_fields"]) == 0
@@ -538,7 +538,7 @@ def test_MarcValidationError_multiple_errors_order_item(stub_record):
     stub_record["960"].delete_subfield("t")
     stub_record["960"].add_subfield("t", "PAH")
     with pytest.raises(ValidationError) as e:
-        MonographRecord(leader=stub_record.leader, fields=stub_record.fields)
+        RecordModel(leader=stub_record.leader, fields=stub_record.fields)
     errors = MarcValidationError(e.value.errors()).to_dict()
     assert errors["error_count"] == 3
     assert len(errors["missing_fields"]) == 1

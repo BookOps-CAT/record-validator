@@ -8,7 +8,7 @@ from pydantic.functional_validators import AfterValidator, field_validator
 from record_validator.validators import validate_monograph
 
 
-class MonographRecord(BaseModel):
+class RecordModel(BaseModel):
     """
     A class to define a valid, full MARC record for a monograph.
 
