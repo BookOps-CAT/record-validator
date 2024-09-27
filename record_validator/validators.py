@@ -1,5 +1,6 @@
 from typing import Annotated, Any, Dict, List, Union
 from pymarc import Field as MarcField
+from pymarc import Leader
 from pydantic import Discriminator, Tag, TypeAdapter
 from pydantic_core import PydanticCustomError, ValidationError, InitErrorDetails
 from record_validator.field_models import (
@@ -155,6 +156,11 @@ def validate_field_values(fields: list) -> list:
         except ValidationError as e:
             validation_errors.extend(e.errors())
     return validation_errors
+
+
+def validate_leader(input: Union[str, Leader]) -> str:
+    """Validate the leader."""
+    return str(input)
 
 
 def validate_order_item_mismatches(

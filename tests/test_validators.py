@@ -10,6 +10,7 @@ from record_validator.validators import (
     get_subfield_from_code,
     validate_fields,
     validate_field_values,
+    validate_leader,
     validate_order_item_mismatches,
 )
 
@@ -304,6 +305,17 @@ def test_validate_field_values_multiple_errors(stub_record):
     error_types = [i["type"] for i in errors]
     assert len(errors) == 2
     assert sorted(error_types) == sorted(["missing", "literal_error"])
+
+
+def test_validate_leader(stub_record):
+    leader_str = "00454cam a22001575i 4500"
+    stub_record_leader = stub_record.leader
+    valid_leader_str = validate_leader(leader_str)
+    valid_leader_marc = validate_leader(stub_record_leader)
+    assert valid_leader_str == leader_str
+    assert isinstance(valid_leader_str, str)
+    assert valid_leader_marc == "00454cam a22001575i 4500"
+    assert isinstance(valid_leader_marc, str)
 
 
 def test_validate_order_item_mismatches(stub_record):
