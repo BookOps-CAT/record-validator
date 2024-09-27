@@ -6,7 +6,7 @@ from pymarc import Subfield
 from record_validator.validators import (
     get_field_tag,
     get_missing_field_list,
-    get_order_item_from_field,
+    get_order_item_list,
     get_subfield_from_code,
     validate_fields,
     validate_field_values,
@@ -108,7 +108,7 @@ def test_get_missing_field_list_other(fields):
 
 @pytest.mark.parametrize(
     "tag, code, expected",
-    [("960", "t", "MAF"), ("050", "a", "F00")],
+    [("960", "t", ["MAF"]), ("050", "a", ["F00"])],
 )
 def test_get_subfield_from_code_marc(stub_record, tag, code, expected):
     field = stub_record.get(tag)
@@ -122,15 +122,25 @@ def test_get_subfield_from_code_dict():
         "ind2": " ",
         "subfields": [{"a": "foo"}, {"b": "bar"}, {"c": "baz"}],
     }
-    assert get_subfield_from_code(field=field, tag="980", code="a") == "foo"
-    assert get_subfield_from_code(field=field, tag="980", code="b") == "bar"
-    assert get_subfield_from_code(field=field, tag="980", code="c") == "baz"
+    assert get_subfield_from_code(field=field, tag="980", code="a") == ["foo"]
+    assert get_subfield_from_code(field=field, tag="980", code="b") == ["bar"]
+    assert get_subfield_from_code(field=field, tag="980", code="c") == ["baz"]
 
 
 def test_get_subfield_from_code_pymarc_dict(stub_record):
     stub_record_dict = stub_record.as_dict()
     field = stub_record_dict["fields"][-1]
-    assert get_subfield_from_code(field=field, tag="980", code="a") == "240101"
+    assert get_subfield_from_code(field=field, tag="980", code="a") == ["240101"]
+
+
+def test_get_subfield_from_code_None(stub_record):
+    field = {
+        "tag": "980",
+        "ind1": " ",
+        "ind2": " ",
+        "subfields": [{"a": "foo"}, {"b": "bar"}, {"c": "baz"}],
+    }
+    assert get_subfield_from_code(field=field, tag="980", code="z") == [None]
 
 
 def test_get_subfield_from_code_other():
@@ -138,17 +148,17 @@ def test_get_subfield_from_code_other():
     assert get_subfield_from_code(field=field, tag="980", code="a") is None
 
 
-def test_get_order_item_from_field(stub_record):
+def test_get_order_item_list_marc(stub_record):
     fields = stub_record.fields
-    parsed_data = get_order_item_from_field(fields)
+    parsed_data = get_order_item_list(fields)
     assert [i["item_type"] for i in parsed_data] == ["55"]
     assert [i["order_location"] for i in parsed_data] == ["MAF"]
     assert sorted([i["item_location"] for i in parsed_data]) == sorted(["rcmf2"])
 
 
-def test_get_order_item_from_field_multiple(stub_record_with_dupes):
+def test_get_order_item_list_multiple(stub_record_with_dupes):
     fields = stub_record_with_dupes.fields
-    parsed_data = get_order_item_from_field(fields)
+    parsed_data = get_order_item_list(fields)
     assert len(parsed_data) == 2
     assert [i["item_type"] for i in parsed_data] == ["55", "55"]
     assert [i["order_location"] for i in parsed_data] == ["MAF", "MAF"]
@@ -157,7 +167,7 @@ def test_get_order_item_from_field_multiple(stub_record_with_dupes):
     )
 
 
-def test_get_order_item_from_field_error(stub_record):
+def test_get_order_item_list_error(stub_record):
     stub_record.add_field(
         MarcField(
             tag="960",
@@ -167,25 +177,25 @@ def test_get_order_item_from_field_error(stub_record):
     )
     fields = stub_record.fields
     with pytest.raises(AssertionError) as e:
-        get_order_item_from_field(fields)
+        get_order_item_list(fields)
     assert str(e.value) == "Expected 1 order location, got 2"
 
 
-def test_get_order_item_from_field_dict(stub_record):
+def test_get_order_item_list_dict(stub_record):
     stub_record_dict = stub_record.as_dict()
     fields = stub_record_dict["fields"]
     assert isinstance(fields, list)
-    parsed_data = get_order_item_from_field(fields)
+    parsed_data = get_order_item_list(fields)
     assert [i["item_type"] for i in parsed_data] == ["55"]
     assert [i["order_location"] for i in parsed_data] == ["MAF"]
     assert sorted([i["item_location"] for i in parsed_data]) == sorted(["rcmf2"])
 
 
-def test_get_order_item_from_field_dict_multiple(stub_record, stub_item):
+def test_get_order_item_list_dict_multiple(stub_record, stub_item):
     stub_record.add_field(stub_item)
     stub_record_dict = stub_record.as_dict()
     fields = stub_record_dict["fields"]
-    parsed_data = get_order_item_from_field(fields)
+    parsed_data = get_order_item_list(fields)
     item_fields = [i for i in fields if "949" in i]
     assert len(item_fields) == 2
     assert len(parsed_data) == 2
@@ -196,7 +206,7 @@ def test_get_order_item_from_field_dict_multiple(stub_record, stub_item):
     )
 
 
-def test_get_order_item_from_field_dict_error():
+def test_get_order_item_list_dict_error():
     fields = [
         {
             "tag": "960",
@@ -219,7 +229,7 @@ def test_get_order_item_from_field_dict_error():
         },
     ]
     with pytest.raises(AssertionError) as e:
-        get_order_item_from_field(fields)
+        get_order_item_list(fields)
     assert str(e.value) == "Expected 1 order location, got 2"
 
 

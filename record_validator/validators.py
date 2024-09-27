@@ -45,28 +45,28 @@ def get_missing_field_list(fields: list) -> list:
     return [tag for tag in required_fields if tag not in all_fields]
 
 
-def get_order_item_from_field(
-    input: List[Union[MarcField, Dict[str, Any]]]
+def get_order_item_list(
+    fields: List[Union[MarcField, Dict[str, Any]]]
 ) -> List[Dict[str, Union[str, None]]]:
-    order_locations = []
-    item_locations = []
-    item_types = []
-    for field in input:
+    order_locations: List[Union[str, None]] = []
+    item_locations: List[Union[str, None]] = []
+    item_types: List[Union[str, None]] = []
+    for field in fields:
         if (isinstance(field, MarcField) and field.tag == "960") or (
             isinstance(field, dict)
             and ("960" in field or ("tag" in field and field["tag"] == "960"))
         ):
-            order_locations.append(
+            order_locations.extend(
                 get_subfield_from_code(field=field, code="t", tag="960")
             )
         elif (isinstance(field, MarcField) and field.tag == "949") or (
             isinstance(field, dict)
             and ("949" in field or ("tag" in field and field["tag"] == "949"))
         ):
-            item_locations.append(
+            item_locations.extend(
                 get_subfield_from_code(field=field, code="l", tag="949")
             )
-            item_types.append(get_subfield_from_code(field=field, code="t", tag="949"))
+            item_types.extend(get_subfield_from_code(field=field, code="t", tag="949"))
     order_count = len(order_locations)
     assert order_count == 1, f"Expected 1 order location, got {order_count}"
     result = [
@@ -80,7 +80,7 @@ def get_subfield_from_code(
     field: Union[MarcField, dict],
     tag: str,
     code: str,
-) -> Union[str, None]:
+) -> Union[list[str], list[None]]:
     if not isinstance(field, (MarcField, dict)):
         return None
     elif isinstance(field, MarcField):
@@ -91,9 +91,9 @@ def get_subfield_from_code(
         )
         subfields = [i[code] for i in all_subfields if code in i.keys()]
     if subfields == []:
-        return None
-    assert len(subfields) == 1
-    return subfields[0]
+        return [None]
+    else:
+        return subfields
 
 
 def validate_fields(self: list) -> list:
@@ -160,7 +160,7 @@ def validate_field_values(fields: list) -> list:
 def validate_order_item_data(self: List[Union[MarcField, Dict[str, Any]]]) -> list:
     error_msg = "Invalid combination of item_type, order_location and item_location"
     validation_errors = []
-    order_item_list = get_order_item_from_field(self)
+    order_item_list = get_order_item_list(self)
     for order_item in order_item_list:
         if order_item not in ValidOrderItems.to_list():
             validation_errors.append(
