@@ -3,9 +3,8 @@
 from typing import Annotated, Dict, List, Union
 from pydantic import BaseModel, Field, ConfigDict
 from pymarc import Field as MarcField
-from pymarc import Leader
-from pydantic.functional_validators import AfterValidator, field_validator
-from record_validator.validators import validate_monograph
+from pydantic.functional_validators import AfterValidator, BeforeValidator
+from record_validator.validators import validate_leader, validate_monograph
 
 
 class RecordModel(BaseModel):
@@ -25,6 +24,7 @@ class RecordModel(BaseModel):
             max_length=24,
             pattern=r"^[0-9]{5}[acdnp][acdefgijkmoprt][abcdims][\sa][\sa]22[0-9]{5}[\s12345678uz][\sacinu][\sabc]4500$",  # noqa E501
         ),
+        BeforeValidator(validate_leader),
     ]
     fields: Annotated[
         Union[
@@ -33,11 +33,3 @@ class RecordModel(BaseModel):
         ],
         AfterValidator(validate_monograph),
     ]
-
-    @field_validator("leader", mode="before")
-    @classmethod
-    def validate_leader(cls, leader: Union[str, Leader]) -> str:
-        if isinstance(leader, str):
-            return leader
-        else:
-            return str(leader)
