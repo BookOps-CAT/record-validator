@@ -6,6 +6,11 @@ from pymarc import Field as MarcField
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from record_validator.validators import validate_leader, validate_monograph
 
+RecordFields = Union[
+    List[MarcField],
+    List[Dict[str, Union[str, Dict[str, Union[str, List[Dict[str, str]]]]]]],
+]
+
 
 class RecordModel(BaseModel):
     """
@@ -26,10 +31,4 @@ class RecordModel(BaseModel):
         ),
         BeforeValidator(validate_leader),
     ]
-    fields: Annotated[
-        Union[
-            List[MarcField],
-            List[Dict[str, Union[str, Dict[str, Union[str, List[Dict[str, str]]]]]]],
-        ],
-        AfterValidator(validate_monograph),
-    ]
+    fields: Annotated[RecordFields, AfterValidator(validate_monograph)]
