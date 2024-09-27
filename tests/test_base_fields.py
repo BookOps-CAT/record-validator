@@ -4,9 +4,45 @@ from pymarc import Field as MarcField
 from record_validator.base_fields import (
     BaseControlField,
     BaseDataField,
+    get_control_field_input,
     get_data_field_input,
 )
 from record_validator.field_models import BibCallNo
+
+
+def test_get_control_field_input_marc(stub_record):
+    field = stub_record.get("001")
+    parsed_field = get_control_field_input(field)
+    assert parsed_field["tag"] == "001"
+    assert parsed_field["value"] == "on1381158740"
+
+
+def test_get_control_field_input_dict(stub_record):
+    stub_record_dict = stub_record.as_dict()
+    field = stub_record_dict["fields"][0]
+    parsed_field = get_control_field_input(field)
+    assert parsed_field["tag"] == "008"
+    assert parsed_field["value"] == "190306s2017    ht a   j      000 1 hat d"
+
+
+@pytest.mark.parametrize(
+    "data",
+    [[], (960, "", ""), "960", {"960": "foo"}],
+)
+def test_get_control_field_input_errors(data):
+    parsed_data = get_control_field_input(data)
+    assert parsed_data == data
+
+
+def test_get_control_field_input_extra_fields():
+    field = {"001": {"value": "on1234567890", "ind1": "1", "ind2": "2"}}
+    parsed_data = get_control_field_input(field)
+    assert parsed_data == {
+        "tag": "001",
+        "value": "on1234567890",
+        "ind1": "1",
+        "ind2": "2",
+    }
 
 
 def test_get_data_field_input_marc(stub_record):

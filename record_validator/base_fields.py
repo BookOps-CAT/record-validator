@@ -1,7 +1,22 @@
 from typing import Annotated, Any, Dict, List, Literal, Union
 from pymarc import Field as MarcField
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
-from record_validator.constants import AllSubfields
+from record_validator.constants import AllFields, AllSubfields
+
+
+def get_control_field_input(input: Union[MarcField, Dict[str, Any]]) -> Dict[str, Any]:
+    if not isinstance(input, (MarcField, dict)):
+        return input
+    elif isinstance(input, MarcField):
+        return {"tag": input.tag, "value": input.value()}
+    elif next(iter(input)) not in AllFields.control_fields():
+        return input
+    else:
+        ((tag, value),) = input.items()
+        out = {"tag": tag, "value": value}
+        if isinstance(value, dict):
+            out.update({field: value for field, value in value.items()})
+        return out
 
 
 def get_data_field_input(
@@ -43,27 +58,8 @@ class BaseControlField(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_control_field_input(
-        cls, input: Any
-    ) -> Union[Dict[str, Any], "BaseControlField"]:
-        if not isinstance(input, (MarcField, dict)) or (
-            isinstance(input, dict)
-            and next(iter(input)) not in ["001", "003", "005", "006", "007", "008"]
-        ):
-            return input
-        elif isinstance(input, MarcField):
-            return cls(tag=input.tag, value=input.value())
-        elif isinstance(input, dict) and all(
-            [isinstance(i, str) for i in input.values()]
-        ):
-            ((tag, value),) = input.items()
-            return cls(tag=tag, value=value)
-        else:
-            ((tag, value),) = input.items()
-            out = {"tag": tag, "value": value}
-            if isinstance(value, dict):
-                out.update({field: value for field, value in value.items()})
-            return cls(**out)
+    def parse_input(cls, input: Any) -> Any:
+        return get_control_field_input(input)
 
     @model_serializer(mode="plain")
     def serialize_control_field(self) -> Dict[str, str]:
