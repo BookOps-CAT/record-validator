@@ -52,6 +52,24 @@ def get_order_item_list(
     return result
 
 
+def get_order_item_mismatches(fields: List[Union[MarcField, Dict[str, Any]]]) -> list:
+    error_msg = "Invalid combination of item_type, order_location and item_location"
+    errors = []
+    order_items = get_order_item_list(fields)
+    invalid_order_items = [i for i in order_items if i not in ValidOrderItems.to_list()]
+
+    for order_item in invalid_order_items:
+        errors.append(
+            InitErrorDetails(
+                type=PydanticCustomError(
+                    "order_item_mismatch", f"{error_msg}: {order_item}"
+                ),
+                input=order_item,
+            )
+        )
+    return errors
+
+
 def get_subfield_from_code(
     field: Union[MarcField, dict],
     tag: str,
@@ -114,7 +132,7 @@ def validate_monograph(fields: list) -> list:
         loc not in [i["loc"][-1] for i in validation_errors if "loc" in i]
         for loc in ["item_location", "item_type", "order_location"]
     ):
-        order_item_errors = validate_order_item_mismatches(fields)
+        order_item_errors = get_order_item_mismatches(fields)
         validation_errors.extend(order_item_errors)
 
     if len(validation_errors) > 0:
@@ -148,23 +166,3 @@ def validate_other(fields: list) -> list:
 def validate_leader(input: Union[str, Leader]) -> str:
     """Validate the leader."""
     return str(input)
-
-
-def validate_order_item_mismatches(
-    fields: List[Union[MarcField, Dict[str, Any]]]
-) -> list:
-    error_msg = "Invalid combination of item_type, order_location and item_location"
-    errors = []
-    order_items = get_order_item_list(fields)
-    invalid_order_items = [i for i in order_items if i not in ValidOrderItems.to_list()]
-
-    for order_item in invalid_order_items:
-        errors.append(
-            InitErrorDetails(
-                type=PydanticCustomError(
-                    "order_item_mismatch", f"{error_msg}: {order_item}"
-                ),
-                input=order_item,
-            )
-        )
-    return errors
