@@ -98,13 +98,13 @@ class MarcValidationError:
 
     def _get_missing_fields(self) -> list:
         return [
-            i
+            i.loc_marc
             for i in self.errors
             if i.type == "missing" or i.type == "missing_required_field"
         ]
 
     def _get_extra_fields(self) -> list:
-        return [i for i in self.errors if i.type == "extra_forbidden"]
+        return [i.loc_marc for i in self.errors if i.type == "extra_forbidden"]
 
     def _get_invalid_fields(self) -> list:
         invalid_fields = [
@@ -133,11 +133,10 @@ class MarcValidationError:
         return [i.input for i in self.errors if i.type == "order_item_mismatch"]
 
     def to_dict(self):
-        out_dict = {
+        return {
             "error_count": self.error_count,
-            "missing_fields": [i.loc_marc for i in self.missing_fields],
-            "extra_fields": [i.loc_marc for i in self.extra_fields],
+            "missing_fields": self.missing_fields,
+            "extra_fields": self.extra_fields,
             "invalid_fields": self.invalid_fields,
             "order_item_mismatches": self.order_item_mismatches,
         }
-        return out_dict
