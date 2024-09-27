@@ -36,12 +36,12 @@ from record_validator.field_models import (
         (
             "8",
             "",
-            "ReCAP 23-000000",
+            "ReCAP 24-000000",
         ),
         (
             "8",
             "",
-            "ReCAP 23-000000",
+            "ReCAP 25-000000",
         ),
     ],
 )
