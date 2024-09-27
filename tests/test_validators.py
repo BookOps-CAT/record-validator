@@ -61,7 +61,7 @@ def test_get_missing_field_list_from_dict(stub_record, delete_fields, expected):
     stub_record_dict = stub_record.as_dict()
     fields = stub_record_dict["fields"]
     missing_fields = get_missing_field_list(fields)
-    assert missing_fields == expected
+    assert sorted(missing_fields) == sorted(expected)
 
 
 @pytest.mark.parametrize(
@@ -78,7 +78,7 @@ def test_get_missing_field_list_from_marc(stub_record, delete_fields, expected):
         stub_record.remove_fields(field)
     fields = stub_record.fields
     missing_fields = get_missing_field_list(fields)
-    assert missing_fields == expected
+    assert sorted(missing_fields) == sorted(expected)
 
 
 @pytest.mark.parametrize(
@@ -93,15 +93,17 @@ def test_get_missing_field_list_from_marc(stub_record, delete_fields, expected):
     ],
 )
 def test_get_missing_field_list_other(fields):
-    assert get_missing_field_list(fields) == [
-        "852",
-        "901",
-        "050",
-        "910",
-        "960",
-        "980",
-        "949",
-    ]
+    assert sorted(get_missing_field_list(fields)) == sorted(
+        [
+            "852",
+            "901",
+            "050",
+            "910",
+            "960",
+            "980",
+            "949",
+        ]
+    )
 
 
 @pytest.mark.parametrize(

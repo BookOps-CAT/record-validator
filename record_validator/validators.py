@@ -18,49 +18,31 @@ from record_validator.field_models import (
     OrderField,
     OtherDataField,
 )
-
-
-CONTROL_FIELDS = ["001", "003", "005", "006", "007", "008"]
-REQUIRED_FIELDS = ["852", "901", "050", "910", "960", "980", "949"]
-VALID_ORDER_ITEMS = [
-    {"order_location": "MAB", "item_location": "rcmb2", "item_type": "2"},
-    {"order_location": "MAS", "item_location": "rcmb2", "item_type": "2"},
-    {"order_location": "MAF", "item_location": "rcmf2", "item_type": "55"},
-    {"order_location": "MAF", "item_location": "rcmf2", "item_type": None},
-    {"order_location": "MAG", "item_location": "rcmg2", "item_type": "55"},
-    {"order_location": "MAG", "item_location": "rcmg2", "item_type": None},
-    {"order_location": "MAL", "item_location": "rc2ma", "item_type": "55"},
-    {"order_location": "MAL", "item_location": None, "item_type": "55"},
-    {"order_location": "MAL", "item_location": "rc2ma", "item_type": None},
-    {"order_location": "MAL", "item_location": None, "item_type": None},
-    {"order_location": "MAP", "item_location": "rcmp2", "item_type": "2"},
-    {"order_location": "PAH", "item_location": "rcph2", "item_type": "55"},
-    {"order_location": "PAH", "item_location": "rcph2", "item_type": None},
-    {"order_location": "PAM", "item_location": "rcpm2", "item_type": "55"},
-    {"order_location": "PAM", "item_location": "rcpm2", "item_type": None},
-    {"order_location": "PAT", "item_location": "rcpt2", "item_type": "55"},
-    {"order_location": "PAT", "item_location": "rcpt2", "item_type": None},
-    {"order_location": "SC", "item_location": "rc2cf", "item_type": "55"},
-    {"order_location": "SC", "item_location": "rc2cf", "item_type": None},
-]
+from record_validator.constants import AllFields, ValidOrderItems
 
 
 def get_field_tag(field: Union[MarcField, dict]) -> str:
     tag = field.tag if isinstance(field, MarcField) else list(field.keys())[0]
-    if tag in REQUIRED_FIELDS or tag in CONTROL_FIELDS:
+    if (
+        tag
+        in AllFields.monograph_fields()
+        + AllFields.required_fields()
+        + AllFields.control_fields()
+    ):
         return tag
     else:
         return "data_field"
 
 
 def get_missing_field_list(fields: list) -> list:
+    required_fields = AllFields.monograph_fields() + AllFields.required_fields()
     if all(isinstance(i, dict) for i in fields):
         all_fields = [key for i in fields for key in i.keys()]
     elif all(isinstance(i, MarcField) for i in fields):
         all_fields = [i.tag for i in fields]
     else:
         all_fields = []
-    return [tag for tag in REQUIRED_FIELDS if tag not in all_fields]
+    return [tag for tag in required_fields if tag not in all_fields]
 
 
 def get_order_item_from_field(
@@ -180,7 +162,7 @@ def validate_order_item_data(self: List[Union[MarcField, Dict[str, Any]]]) -> li
     validation_errors = []
     order_item_list = get_order_item_from_field(self)
     for order_item in order_item_list:
-        if order_item not in VALID_ORDER_ITEMS:
+        if order_item not in ValidOrderItems.to_list():
             validation_errors.append(
                 InitErrorDetails(
                     type=PydanticCustomError(
