@@ -1,8 +1,12 @@
 from typing import Any, Dict, List, Union
 from pymarc import Field as MarcField
 from pymarc import Leader
-from pydantic_core import PydanticCustomError, ValidationError, InitErrorDetails
-from record_validator.adapters import MonographRecordAdapter, OtherRecordAdapter
+from pydantic import ValidationError
+from pydantic_core import PydanticCustomError, InitErrorDetails
+from record_validator.adapters import (
+    MonographRecordAdapter,
+    OtherRecordAdapter,
+)
 from record_validator.constants import AllFields, ValidOrderItems
 
 

@@ -237,7 +237,10 @@ def test_MarcError_string_pattern(stub_record):
     assert error.input == "ReCAP-24-119100"
     assert isinstance(error.ctx, dict)
     assert error.type == "string_pattern_mismatch"
-    assert "String should match pattern" in error.msg
+    assert (
+        error.msg
+        == "String should match pattern. Examples: ['ReCAP 23-000001', 'ReCAP 24-100001', 'ReCAP 25-222000']"
+    )
     assert error.loc_marc == "852$h"
 
 
@@ -314,7 +317,10 @@ def test_MarcError_literal(stub_record):
     assert error.input == "foo"
     assert isinstance(error.ctx, dict)
     assert error.type == "literal_error"
-    assert "Input should be" in error.msg
+    assert (
+        error.msg
+        == "Input should be: 'MAB', 'MAF', 'MAG', 'MAL', 'MAP', 'MAS', 'PAD', 'PAH', 'PAM', 'PAT' or 'SC'"
+    )
     assert error.loc_marc == "960$t"
 
 
@@ -339,7 +345,7 @@ def test_MarcError_literal_indicator_error(stub_record):
     assert error.input == "7"
     assert isinstance(error.ctx, dict)
     assert error.type == "literal_error"
-    assert "Input should be" in error.msg
+    assert error.msg == "Input should be: ' ' or ''"
     assert error.loc_marc == "960ind1"
 
 
@@ -413,8 +419,8 @@ def test_MarcError_order_item_mismatch(stub_record):
     assert error.ctx is None
     assert error.type == "order_item_mismatch"
     assert (
-        "Invalid combination of item_type, order_location and item_location:"
-        in error.msg
+        error.msg
+        == "Invalid combination of item_type, order_location and item_location: {'order_location': 'MAB', 'item_location': 'rcmf2', 'item_type': '55'}"
     )
     assert error.loc_marc == ("960$t", "949_$l", "949_$t")
 
