@@ -65,6 +65,9 @@ class MarcError:
         if (
             self.type == "missing"
             and self.original_error["msg"] == f"Field required: {self.input}"
+        ) or (
+            self.type == "extra_forbidden"
+            and self.original_error["msg"] == f"Extra field:  {self.input}"
         ):
             return tuple([i for i in self.original_error["loc"]] + [self.input])
         else:
