@@ -116,7 +116,7 @@ def validate_fields(self: list) -> list:
     ):
         pass
     else:
-        order_item_errors = validate_order_item_data(self)
+        order_item_errors = validate_order_item_mismatches(self)
         validation_errors.extend(order_item_errors)
     if len(validation_errors) > 0:
         raise ValidationError.from_exception_data(
@@ -157,19 +157,21 @@ def validate_field_values(fields: list) -> list:
     return validation_errors
 
 
-def validate_order_item_data(self: List[Union[MarcField, Dict[str, Any]]]) -> list:
+def validate_order_item_mismatches(
+    fields: List[Union[MarcField, Dict[str, Any]]]
+) -> list:
     error_msg = "Invalid combination of item_type, order_location and item_location"
-    validation_errors = []
-    order_item_list = get_order_item_list(self)
-    for order_item in order_item_list:
-        if order_item not in ValidOrderItems.to_list():
-            validation_errors.append(
-                InitErrorDetails(
-                    type=PydanticCustomError(
-                        "order_item_mismatch",
-                        f"{error_msg}: {order_item}",
-                    ),
-                    input=order_item,
-                )
+    errors = []
+    order_items = get_order_item_list(fields)
+    invalid_order_items = [i for i in order_items if i not in ValidOrderItems.to_list()]
+
+    for order_item in invalid_order_items:
+        errors.append(
+            InitErrorDetails(
+                type=PydanticCustomError(
+                    "order_item_mismatch", f"{error_msg}: {order_item}"
+                ),
+                input=order_item,
             )
-    return validation_errors
+        )
+    return errors

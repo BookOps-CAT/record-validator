@@ -10,7 +10,7 @@ from record_validator.validators import (
     get_subfield_from_code,
     validate_fields,
     validate_field_values,
-    validate_order_item_data,
+    validate_order_item_mismatches,
 )
 
 
@@ -306,12 +306,12 @@ def test_validate_field_values_multiple_errors(stub_record):
     assert sorted(error_types) == sorted(["missing", "literal_error"])
 
 
-def test_validate_order_item_data(stub_record):
+def test_validate_order_item_mismatches(stub_record):
     stub_record["960"].delete_subfield("t")
     stub_record["960"].add_subfield("t", "MAL")
     errors = []
     with does_not_raise():
-        errors.extend(validate_order_item_data(stub_record.as_dict()["fields"]))
+        errors.extend(validate_order_item_mismatches(stub_record.as_dict()["fields"]))
     assert len(errors) == 1
     assert isinstance(errors, list)
     assert "Invalid combination of item_type, order_location and item_location" in str(
