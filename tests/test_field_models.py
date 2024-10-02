@@ -835,7 +835,7 @@ def test_ItemField_valid_from_field(stub_record):
         {"p": "1.00"},
         {"t": "55"},
         {"u": "foo"},
-        {"v": "AUXAM"},
+        {"v": "EVP"},
         {"z": "8528"},
     ]
 
