@@ -3,12 +3,6 @@ from pydantic import TypeAdapter, Discriminator, Tag
 from pymarc import Field as MarcField
 import pytest
 from record_validator.adapters import (
-    get_material_type,
-    get_monograph_tag,
-    get_other_tag,
-    MonographRecordAdapter,
-    OtherRecordAdapter,
-    FieldAdapter,
     get_adapter,
     get_record_type,
     get_vendor_code,
@@ -17,6 +11,7 @@ from record_validator.adapters import (
     AuxOtherFields,
     MonographFields,
     OtherFields,
+    FieldAdapter,
 )
 from record_validator.field_models import (
     AuxBibCallNo,
@@ -323,95 +318,6 @@ def test_OtherFields():
     assert (OtherDataField, Tag("949")) in union_args
 
 
-def test_get_material_type_monograph(stub_record):
-    assert get_material_type(fields=stub_record.fields) == "monograph"
-
-
-def test_get_material_type_dance(stub_dance_record):
-    assert get_material_type(fields=stub_dance_record.fields) == "other"
-
-
-def test_get_material_type_pamphlet(stub_pamphlet_record):
-    assert get_material_type(fields=stub_pamphlet_record.fields) == "other"
-
-
-def test_get_material_type_catalogue(stub_catalogue_record):
-    assert get_material_type(fields=stub_catalogue_record.fields) == "other"
-
-
-def test_get_material_type_multivol(stub_multivol_record):
-    assert get_material_type(fields=stub_multivol_record.fields) == "other"
-
-
-def test_get_material_type_dict(stub_record):
-    record_dict = stub_record.as_dict()
-    assert get_material_type(record_dict["fields"]) == "monograph"
-
-
-@pytest.mark.parametrize(
-    "tag, expected",
-    [
-        ("245", "data_field"),
-        ("960", "960"),
-        ("949", "949"),
-        ("300", "data_field"),
-        ("008", "008"),
-        ("001", "001"),
-    ],
-)
-def test_get_monograph_tag_from_dict(tag, expected):
-    field = {tag: {"ind1": " ", "ind2": " ", "subfields": [{"a": "foo"}]}}
-    assert get_monograph_tag(field) == expected
-
-
-@pytest.mark.parametrize(
-    "tag, expected",
-    [
-        ("245", "data_field"),
-        ("960", "960"),
-        ("949", "949"),
-        ("300", "data_field"),
-        ("008", "008"),
-        ("001", "001"),
-    ],
-)
-def test_get_monograph_tag_from_marc(stub_record, tag, expected):
-    field = stub_record.get(tag, tag)
-    assert get_monograph_tag(field) == expected
-
-
-@pytest.mark.parametrize(
-    "tag, expected",
-    [
-        ("245", "data_field"),
-        ("960", "960"),
-        ("949", "data_field"),
-        ("852", "data_field"),
-        ("008", "008"),
-        ("001", "001"),
-    ],
-)
-def test_get_other_tag_from_dict(tag, expected):
-    field = {tag: {"ind1": " ", "ind2": " ", "subfields": [{"a": "foo"}]}}
-    assert get_other_tag(field) == expected
-
-
-@pytest.mark.parametrize(
-    "tag, expected",
-    [
-        ("245", "data_field"),
-        ("960", "960"),
-        ("949", "data_field"),
-        ("300", "data_field"),
-        ("008", "008"),
-        ("001", "001"),
-    ],
-)
-def test_get_other_tag_from_marc(stub_record, tag, expected):
-    field = stub_record.get(tag, tag)
-    assert get_other_tag(field) == expected
-
-
 def test_FieldAdapter():
     schema = FieldAdapter.json_schema(by_alias=True)
     assert sorted([i for i in schema["$defs"].keys()]) == sorted(
@@ -430,48 +336,6 @@ def test_FieldAdapter():
             "LCClass",
             "LibraryField",
             "MonographDataField",
-            "OrderField",
-            "OtherDataField",
-        ]
-    )
-
-
-def test_MonographRecordAdapter():
-    schema = MonographRecordAdapter.json_schema(by_alias=True)
-    assert sorted([i for i in schema["$defs"].keys()]) == sorted(
-        [
-            "BibCallNo",
-            "BibVendorCode",
-            "ControlField001",
-            "ControlField003",
-            "ControlField005",
-            "ControlField006",
-            "ControlField007",
-            "ControlField008",
-            "InvoiceField",
-            "ItemField",
-            "LCClass",
-            "LibraryField",
-            "MonographDataField",
-            "OrderField",
-        ]
-    )
-
-
-def test_OtherRecordAdapter():
-    schema = OtherRecordAdapter.json_schema(by_alias=True)
-    assert sorted([i for i in schema["$defs"].keys()]) == sorted(
-        [
-            "BibVendorCode",
-            "ControlField001",
-            "ControlField003",
-            "ControlField005",
-            "ControlField006",
-            "ControlField007",
-            "ControlField008",
-            "InvoiceField",
-            "LCClass",
-            "LibraryField",
             "OrderField",
             "OtherDataField",
         ]

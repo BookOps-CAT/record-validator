@@ -11,8 +11,6 @@ from record_validator.validators import (
     get_tag_list,
     validate_field_list,
     validate_leader,
-    validate_monograph,
-    validate_other,
     validate_fields,
     validate_all,
 )
@@ -197,99 +195,6 @@ def test_validate_leader(stub_record):
     assert isinstance(valid_leader_str, str)
     assert valid_leader_marc == "00454cam a22001575i 4500"
     assert isinstance(valid_leader_marc, str)
-
-
-def test_validate_monograph(stub_record):
-    with does_not_raise():
-        validate_monograph(stub_record.as_dict()["fields"])
-
-
-def test_validate_monograph_invalid_field(stub_record):
-    stub_record["960"].delete_subfield("t")
-    stub_record["960"].add_subfield("t", "foo")
-    with pytest.raises(ValidationError) as e:
-        validate_monograph(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "literal_error"
-
-
-def test_validate_monograph_missing_field(stub_record):
-    stub_record["960"].delete_subfield("t")
-    with pytest.raises(ValidationError) as e:
-        validate_monograph(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "missing"
-
-
-def test_validate_monograph_missing_entire_field(stub_record):
-    stub_record.remove_fields("960")
-    with pytest.raises(ValidationError) as e:
-        validate_monograph(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "missing"
-
-
-def test_validate_monograph_multiple_errors_order_item_mismatch(stub_record):
-    stub_record.remove_fields("852")
-    stub_record["960"].delete_subfield("t")
-    stub_record["960"].add_subfield("t", "PAM")
-    with pytest.raises(ValidationError) as e:
-        validate_monograph(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 2
-    assert sorted(i["type"] for i in e.value.errors()) == sorted(
-        ["missing", "order_item_mismatch"]
-    )
-
-
-def test_validate_monograph_order_item_not_checked(stub_record):
-    stub_record["949"].delete_subfield("t")
-    stub_record["949"].add_subfield("t", "2")
-    stub_record["960"].delete_subfield("t")
-    with pytest.raises(ValidationError) as e:
-        validate_monograph(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "missing"
-
-
-def test_validate_other(stub_record):
-    stub_record.remove_fields("949", "852")
-    with does_not_raise():
-        validate_other(stub_record.as_dict()["fields"])
-
-
-def test_validate_other_invalid_field(stub_record):
-    stub_record.remove_fields("949", "852")
-    stub_record["960"].delete_subfield("t")
-    stub_record["960"].add_subfield("t", "foo")
-    with pytest.raises(ValidationError) as e:
-        validate_other(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "literal_error"
-
-
-def test_validate_other_missing_field(stub_record):
-    stub_record.remove_fields("949", "852")
-    stub_record["960"].delete_subfield("t")
-    with pytest.raises(ValidationError) as e:
-        validate_other(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "missing"
-
-
-def test_validate_other_missing_entire_field(stub_record):
-    stub_record.remove_fields("960", "949", "852")
-    with pytest.raises(ValidationError) as e:
-        validate_other(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 1
-    assert e.value.errors()[0]["type"] == "missing"
-
-
-def test_validate_other_extra_field(stub_record):
-    with pytest.raises(ValidationError) as e:
-        validate_other(stub_record.as_dict()["fields"])
-    assert len(e.value.errors()) == 2
-    assert e.value.errors()[0]["type"] == "extra_forbidden"
-    assert e.value.errors()[1]["type"] == "extra_forbidden"
 
 
 @pytest.mark.parametrize(

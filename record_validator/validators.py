@@ -3,11 +3,7 @@ from pymarc import Field as MarcField
 from pymarc import Leader
 from pydantic import ValidationError
 from pydantic_core import PydanticCustomError, InitErrorDetails
-from record_validator.adapters import (
-    MonographRecordAdapter,
-    OtherRecordAdapter,
-    get_adapter,
-)
+from record_validator.adapters import get_adapter
 from record_validator.constants import AllFields, ValidOrderItems
 from record_validator.utils import get_subfield_from_code
 
@@ -87,53 +83,6 @@ def validate_field_list(tag_list: list, material_type: str) -> list:
 def validate_leader(input: Union[str, Leader]) -> str:
     """Validate the leader."""
     return str(input)
-
-
-def validate_monograph(fields: list) -> list:
-    """Validate MARC record fields."""
-    validation_errors = []
-    tags = get_tag_list(fields)
-
-    validation_errors.extend(validate_field_list(tags, material_type="monograph"))
-
-    for field in fields:
-        try:
-            MonographRecordAdapter.validate_python(field, from_attributes=True)
-        except ValidationError as e:
-            validation_errors.extend(e.errors())
-    if ("960" in tags and "949" in tags) and all(
-        loc not in [i["loc"][-1] for i in validation_errors if "loc" in i]
-        for loc in ["item_location", "item_type", "order_location"]
-    ):
-        order_item_errors = validate_order_items(fields)
-        validation_errors.extend(order_item_errors)
-
-    if len(validation_errors) > 0:
-        raise ValidationError.from_exception_data(
-            title=fields.__class__.__name__, line_errors=validation_errors
-        )
-    else:
-        return fields
-
-
-def validate_other(fields: list) -> list:
-    """Validate MARC record fields."""
-    validation_errors = []
-    tags = get_tag_list(fields)
-
-    validation_errors.extend(validate_field_list(tags, material_type="other"))
-
-    for field in fields:
-        try:
-            OtherRecordAdapter.validate_python(field, from_attributes=True)
-        except ValidationError as e:
-            validation_errors.extend(e.errors())
-    if len(validation_errors) > 0:
-        raise ValidationError.from_exception_data(
-            title=fields.__class__.__name__, line_errors=validation_errors
-        )
-    else:
-        return fields
 
 
 def validate_order_items(fields: List[Union[MarcField, Dict[str, Any]]]) -> list:
