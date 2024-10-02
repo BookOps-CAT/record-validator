@@ -8,6 +8,7 @@ from record_validator.adapters import (
     OtherRecordAdapter,
 )
 from record_validator.constants import AllFields, ValidOrderItems
+from record_validator.utils import get_subfield_from_code
 
 
 def get_extra_fields(tag_list: list, material_type: str) -> List[str]:
@@ -72,26 +73,6 @@ def get_order_item_mismatches(fields: List[Union[MarcField, Dict[str, Any]]]) ->
             )
         )
     return errors
-
-
-def get_subfield_from_code(
-    field: Union[MarcField, dict],
-    tag: str,
-    code: str,
-) -> Union[list[str], list[None]]:
-    if not isinstance(field, (MarcField, dict)):
-        return None
-    elif isinstance(field, MarcField):
-        subfields = [i[1] for i in field.subfields if code == i[0]]
-    else:
-        all_subfields = (
-            field.get("subfields") if "tag" in field else field[tag].get("subfields")
-        )
-        subfields = [i[code] for i in all_subfields if code in i.keys()]
-    if subfields == []:
-        return [None]
-    else:
-        return subfields
 
 
 def get_tag_list(fields: list) -> list:
