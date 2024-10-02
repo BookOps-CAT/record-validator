@@ -14,6 +14,7 @@ from record_validator.validators import (
     validate_monograph,
     validate_other,
     validate_fields,
+    validate_all,
 )
 
 
@@ -350,3 +351,124 @@ def test_validate_fields_other_record_type(type):
     assert isinstance(errors, list)
     assert str(errors[0]["type"]) == "Field required: 960"
     assert errors[0]["input"] == "960"
+
+
+class TestValidateAllMonograph:
+    def test_validate_all(self, stub_record):
+        with does_not_raise():
+            validate_all(stub_record.as_dict()["fields"])
+
+    def test_validate_all_invalid_field(self, stub_record):
+        stub_record["960"].delete_subfield("t")
+        stub_record["960"].add_subfield("t", "foo")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "literal_error"
+
+    def test_validate_all_missing_field(self, stub_record):
+        stub_record["960"].delete_subfield("t")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "missing"
+
+    def test_validate_all_missing_entire_field(self, stub_record):
+        stub_record.remove_fields("960")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "missing"
+
+    def test_validate_all_multiple_errors_order_item_mismatch(self, stub_record):
+        stub_record.remove_fields("852")
+        stub_record["960"].delete_subfield("t")
+        stub_record["960"].add_subfield("t", "PAM")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 2
+        assert sorted(i["type"] for i in e.value.errors()) == sorted(
+            ["missing", "order_item_mismatch"]
+        )
+
+    def test_validate_all_order_item_not_checked(self, stub_record):
+        stub_record["949"].delete_subfield("t")
+        stub_record["949"].add_subfield("t", "2")
+        stub_record["960"].delete_subfield("t")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "missing"
+
+
+class TestValidateAllPamphlet:
+    def test_validate_all(self, stub_pamphlet_record):
+        with does_not_raise():
+            validate_all(stub_pamphlet_record.as_dict()["fields"])
+
+    def test_validate_all_invalid_field(self, stub_pamphlet_record):
+        stub_pamphlet_record["960"].delete_subfield("t")
+        stub_pamphlet_record["960"].add_subfield("t", "foo")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_pamphlet_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "literal_error"
+
+    def test_validate_all_missing_field(self, stub_pamphlet_record):
+        stub_pamphlet_record["960"].delete_subfield("t")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_pamphlet_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "missing"
+
+    def test_validate_all_missing_entire_field(self, stub_pamphlet_record):
+        stub_pamphlet_record.remove_fields("960")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_pamphlet_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "missing"
+
+    def test_validate_all_extra_field(self, stub_record):
+        stub_record["300"].delete_subfield("a")
+        stub_record["300"].add_subfield("a", "5 pages")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 2
+        assert e.value.errors()[0]["type"] == "extra_forbidden"
+        assert e.value.errors()[1]["type"] == "extra_forbidden"
+
+
+class TestValidateAllAuxamOther:
+    def test_validate_all(self, stub_aux_other_record):
+        with does_not_raise():
+            validate_all(stub_aux_other_record.as_dict()["fields"])
+
+    def test_validate_all_invalid_field(self, stub_aux_other_record):
+        stub_aux_other_record["960"].delete_subfield("t")
+        stub_aux_other_record["960"].add_subfield("t", "foo")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_aux_other_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "literal_error"
+
+    def test_validate_all_missing_field(self, stub_aux_other_record):
+        stub_aux_other_record["960"].delete_subfield("t")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_aux_other_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "missing"
+
+    def test_validate_all_missing_entire_field(self, stub_aux_other_record):
+        stub_aux_other_record.remove_fields("960")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_aux_other_record.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "missing"
+
+    def test_validate_all_extra_field(self, stub_auxam_monograph):
+        stub_auxam_monograph["852"].delete_subfield("h")
+        stub_auxam_monograph["852"].add_subfield("h", "ReCAP 24-")
+        with pytest.raises(ValidationError) as e:
+            validate_all(stub_auxam_monograph.as_dict()["fields"])
+        assert len(e.value.errors()) == 1
+        assert e.value.errors()[0]["type"] == "extra_forbidden"

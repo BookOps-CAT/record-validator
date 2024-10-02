@@ -187,3 +187,34 @@ def validate_fields(tag_list: list, record_type: str) -> list:
         for tag in missing_fields
     ]
     return extra_field_errors + missing_field_errors
+
+
+def validate_all(fields: list) -> list:
+    """Validate MARC record fields."""
+    errors = []
+    tags = get_tag_list(fields)
+    record_type, adapter = get_adapter(fields)
+    errors.extend(validate_fields(tags, record_type=record_type))
+    for field in fields:
+        try:
+            adapter.validate_python(field, from_attributes=True)
+        except ValidationError as e:
+            errors.extend(e.errors())
+
+    if "monograph" in record_type and "960" in tags and "949" in tags:
+        error_locs = [i["loc"][-1] for i in errors if "loc" in i and len(i["loc"]) > 1]
+        if not any(
+            [
+                i
+                for i in ["item_location", "item_type", "order_location"]
+                if i in error_locs
+            ]
+        ):
+            errors.extend(validate_order_items(fields))
+
+    if len(errors) > 0:
+        raise ValidationError.from_exception_data(
+            title=fields.__class__.__name__, line_errors=errors
+        )
+    else:
+        return fields
