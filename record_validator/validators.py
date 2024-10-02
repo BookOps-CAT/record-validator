@@ -6,6 +6,7 @@ from pydantic_core import PydanticCustomError, InitErrorDetails
 from record_validator.adapters import (
     MonographRecordAdapter,
     OtherRecordAdapter,
+    get_adapter,
 )
 from record_validator.constants import AllFields, ValidOrderItems
 from record_validator.utils import get_subfield_from_code
@@ -57,24 +58,6 @@ def get_order_item_list(
     return result
 
 
-def get_order_item_mismatches(fields: List[Union[MarcField, Dict[str, Any]]]) -> list:
-    error_msg = "Invalid combination of item_type, order_location and item_location"
-    errors = []
-    order_items = get_order_item_list(fields)
-    invalid_order_items = [i for i in order_items if i not in ValidOrderItems.to_list()]
-
-    for order_item in invalid_order_items:
-        errors.append(
-            InitErrorDetails(
-                type=PydanticCustomError(
-                    "order_item_mismatch", f"{error_msg}: {order_item}"
-                ),
-                input=order_item,
-            )
-        )
-    return errors
-
-
 def get_tag_list(fields: list) -> list:
     all_fields = []
     if all(isinstance(i, dict) for i in fields):
@@ -122,7 +105,7 @@ def validate_monograph(fields: list) -> list:
         loc not in [i["loc"][-1] for i in validation_errors if "loc" in i]
         for loc in ["item_location", "item_type", "order_location"]
     ):
-        order_item_errors = get_order_item_mismatches(fields)
+        order_item_errors = validate_order_items(fields)
         validation_errors.extend(order_item_errors)
 
     if len(validation_errors) > 0:
@@ -151,3 +134,56 @@ def validate_other(fields: list) -> list:
         )
     else:
         return fields
+
+
+def validate_order_items(fields: List[Union[MarcField, Dict[str, Any]]]) -> list:
+    error_msg = "Invalid combination of item_type, order_location and item_location"
+    errors = []
+    order_items = get_order_item_list(fields)
+    invalid_order_items = [i for i in order_items if i not in ValidOrderItems.to_list()]
+
+    for order_item in invalid_order_items:
+        errors.append(
+            InitErrorDetails(
+                type=PydanticCustomError(
+                    "order_item_mismatch", f"{error_msg}: {order_item}"
+                ),
+                input=order_item,
+            )
+        )
+    return errors
+
+
+def validate_fields(tag_list: list, record_type: str) -> list:
+    match record_type.lower():
+        case "evp_other" | "leila_other":
+            extra_tags = AllFields.monograph_fields()
+            required_tags = AllFields.required_fields()
+        case "auxam_other":
+            extra_tags = ["949"]
+            required_tags = AllFields.required_fields()
+        case record_type if "other" in record_type:
+            extra_tags = AllFields.monograph_fields()
+            required_tags = AllFields.required_fields()
+        case record_type if "monograph" in record_type:
+            extra_tags = []
+            required_tags = AllFields.required_fields() + AllFields.monograph_fields()
+        case _:
+            extra_tags = []
+            required_tags = AllFields.required_fields()
+    extra_fields = [i for i in extra_tags if i in tag_list]
+    missing_fields = [i for i in required_tags if i not in tag_list]
+    extra_field_errors = [
+        InitErrorDetails(
+            type=PydanticCustomError("extra_forbidden", f"Extra field: {tag}"),
+            input=tag,
+        )
+        for tag in extra_fields
+    ]
+    missing_field_errors = [
+        InitErrorDetails(
+            type=PydanticCustomError("missing", f"Field required: {tag}"), input=tag
+        )
+        for tag in missing_fields
+    ]
+    return extra_field_errors + missing_field_errors

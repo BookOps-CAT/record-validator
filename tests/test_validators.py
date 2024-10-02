@@ -7,12 +7,13 @@ from record_validator.validators import (
     get_extra_fields,
     get_missing_fields,
     get_order_item_list,
-    get_order_item_mismatches,
+    validate_order_items,
     get_tag_list,
     validate_field_list,
     validate_leader,
     validate_monograph,
     validate_other,
+    validate_fields,
 )
 
 
@@ -133,12 +134,12 @@ def test_get_order_item_list_dict_error():
     assert str(e.value) == "Expected 1 order location, got 2"
 
 
-def test_get_order_item_mismatches(stub_record):
+def test_validate_order_items(stub_record):
     stub_record["960"].delete_subfield("t")
     stub_record["960"].add_subfield("t", "MAL")
     errors = []
     with does_not_raise():
-        errors.extend(get_order_item_mismatches(stub_record.as_dict()["fields"]))
+        errors.extend(validate_order_items(stub_record.as_dict()["fields"]))
     assert len(errors) == 1
     assert isinstance(errors, list)
     assert "Invalid combination of item_type, order_location and item_location" in str(
@@ -151,10 +152,10 @@ def test_get_order_item_mismatches(stub_record):
     }
 
 
-def test_get_order_item_mismatches_no_errors(stub_record):
+def test_validate_order_items_no_errors(stub_record):
     errors = []
     with does_not_raise():
-        errors.extend(get_order_item_mismatches(stub_record.as_dict()["fields"]))
+        errors.extend(validate_order_items(stub_record.as_dict()["fields"]))
     assert len(errors) == 0
 
 
@@ -288,3 +289,64 @@ def test_validate_other_extra_field(stub_record):
     assert len(e.value.errors()) == 2
     assert e.value.errors()[0]["type"] == "extra_forbidden"
     assert e.value.errors()[1]["type"] == "extra_forbidden"
+
+
+@pytest.mark.parametrize(
+    "type",
+    ["monograph", "evp_monograph", "auxam_monograph"],
+)
+def test_validate_fields_monograph(type):
+    tags = ["001", "008", "050", "910", "980", "901", "949", "960", "245", "300"]
+    errors = []
+    with does_not_raise():
+        errors.extend(validate_fields(tag_list=tags, record_type=type))
+    assert len(errors) == 1
+    assert isinstance(errors, list)
+    assert str(errors[0]["type"]) == "Field required: 852"
+    assert errors[0]["input"] == "852"
+
+
+@pytest.mark.parametrize(
+    "type",
+    ["evp_other", "other", "leila_other"],
+)
+def test_validate_fields_other(type):
+    tags = ["001", "008", "050", "910", "980", "901", "960", "852", "949", "245", "300"]
+    errors = []
+    with does_not_raise():
+        errors.extend(validate_fields(tag_list=tags, record_type=type))
+    assert len(errors) == 2
+    assert isinstance(errors, list)
+    assert sorted([str(i["type"]) for i in errors]) == sorted(
+        [
+            "Extra field: 852",
+            "Extra field: 949",
+        ]
+    )
+    assert [i["input"] for i in errors] == ["852", "949"]
+
+
+def test_validate_fields_auxam_other():
+    tags = ["001", "008", "050", "910", "980", "901", "960", "852", "949", "245", "300"]
+    errors = []
+    with does_not_raise():
+        errors.extend(validate_fields(tag_list=tags, record_type="auxam_other"))
+    assert len(errors) == 1
+    assert isinstance(errors, list)
+    assert str(errors[0]["type"]) == "Extra field: 949"
+    assert errors[0]["input"] == "949"
+
+
+@pytest.mark.parametrize(
+    "type",
+    ["foo", "bar", "leila"],
+)
+def test_validate_fields_other_record_type(type):
+    tags = ["001", "008", "050", "910", "980", "901", "245", "300"]
+    errors = []
+    with does_not_raise():
+        errors.extend(validate_fields(tag_list=tags, record_type=type))
+    assert len(errors) == 1
+    assert isinstance(errors, list)
+    assert str(errors[0]["type"]) == "Field required: 960"
+    assert errors[0]["input"] == "960"
