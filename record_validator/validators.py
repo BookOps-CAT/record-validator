@@ -48,27 +48,35 @@ def get_tag_list(fields: list) -> list:
     return all_fields
 
 
-def validate_leader(input: Union[str, Leader]) -> str:
-    """Validate the leader."""
-    return str(input)
-
-
-def validate_order_items(fields: List[Union[MarcField, Dict[str, Any]]]) -> list:
-    error_msg = "Invalid combination of item_type, order_location and item_location"
+def validate_all(fields: list) -> list:
+    """Validate MARC record fields."""
     errors = []
-    order_items = get_order_item_list(fields)
-    invalid_order_items = [i for i in order_items if i not in ValidOrderItems.to_list()]
+    tags = get_tag_list(fields)
+    record_type, adapter = get_adapter(fields)
+    errors.extend(validate_fields(tags, record_type=record_type))
+    for field in fields:
+        try:
+            adapter.validate_python(field, from_attributes=True)
+        except ValidationError as e:
+            errors.extend(e.errors())
 
-    for order_item in invalid_order_items:
-        errors.append(
-            InitErrorDetails(
-                type=PydanticCustomError(
-                    "order_item_mismatch", f"{error_msg}: {order_item}"
-                ),
-                input=order_item,
-            )
+    if "monograph" in record_type and "960" in tags and "949" in tags:
+        error_locs = [i["loc"][-1] for i in errors if "loc" in i and len(i["loc"]) > 1]
+        if not any(
+            [
+                i
+                for i in ["item_location", "item_type", "order_location"]
+                if i in error_locs
+            ]
+        ):
+            errors.extend(validate_order_items(fields))
+
+    if len(errors) > 0:
+        raise ValidationError.from_exception_data(
+            title=fields.__class__.__name__, line_errors=errors
         )
-    return errors
+    else:
+        return fields
 
 
 def validate_fields(tag_list: list, record_type: str) -> list:
@@ -106,32 +114,24 @@ def validate_fields(tag_list: list, record_type: str) -> list:
     return extra_field_errors + missing_field_errors
 
 
-def validate_all(fields: list) -> list:
-    """Validate MARC record fields."""
+def validate_leader(input: Union[str, Leader]) -> str:
+    """Validate the leader."""
+    return str(input)
+
+
+def validate_order_items(fields: List[Union[MarcField, Dict[str, Any]]]) -> list:
+    error_msg = "Invalid combination of item_type, order_location and item_location"
     errors = []
-    tags = get_tag_list(fields)
-    record_type, adapter = get_adapter(fields)
-    errors.extend(validate_fields(tags, record_type=record_type))
-    for field in fields:
-        try:
-            adapter.validate_python(field, from_attributes=True)
-        except ValidationError as e:
-            errors.extend(e.errors())
+    order_items = get_order_item_list(fields)
+    invalid_order_items = [i for i in order_items if i not in ValidOrderItems.to_list()]
 
-    if "monograph" in record_type and "960" in tags and "949" in tags:
-        error_locs = [i["loc"][-1] for i in errors if "loc" in i and len(i["loc"]) > 1]
-        if not any(
-            [
-                i
-                for i in ["item_location", "item_type", "order_location"]
-                if i in error_locs
-            ]
-        ):
-            errors.extend(validate_order_items(fields))
-
-    if len(errors) > 0:
-        raise ValidationError.from_exception_data(
-            title=fields.__class__.__name__, line_errors=errors
+    for order_item in invalid_order_items:
+        errors.append(
+            InitErrorDetails(
+                type=PydanticCustomError(
+                    "order_item_mismatch", f"{error_msg}: {order_item}"
+                ),
+                input=order_item,
+            )
         )
-    else:
-        return fields
+    return errors
