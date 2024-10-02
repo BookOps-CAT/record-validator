@@ -21,7 +21,7 @@ from record_validator.field_models import (
     OrderField,
     OtherDataField,
 )
-from record_validator.utils import get_subfield_from_code
+from record_validator.utils import get_subfield_from_code, get_vendor_code
 
 
 FieldAdapter: TypeAdapter = TypeAdapter(
@@ -96,32 +96,6 @@ def get_record_type(fields: list, vendor_code: Union[str, None]) -> str:
         return "other"
     else:
         return "monograph"
-
-
-def get_vendor_code(fields: list) -> Union[str, None]:
-    if not all(isinstance(i, (MarcField, dict)) for i in fields):
-        return None
-    if all(isinstance(i, MarcField) for i in fields):
-        fields = [i for i in fields if i.tag == "901" or i.tag == "949"]
-    elif all(isinstance(i, dict) for i in fields) and all("tag" in i for i in fields):
-        fields = [i for i in fields if i["tag"] == "901" or i["tag"] == "949"]
-    else:
-        fields = [i for i in fields if "901" in i or "949" in i]
-    subfields: list = []
-    for field in fields:
-        if isinstance(field, MarcField):
-            tag = field.tag
-        elif isinstance(field, dict) and "tag" in field:
-            tag = field["tag"]
-        else:
-            tag = list(field.keys())[0]
-        code = "a" if tag == "901" else "v"
-        subfields.extend(get_subfield_from_code(field, tag=tag, code=code))
-    deduped_subfields = list(set(subfields))
-    if len(deduped_subfields) == 1:
-        return deduped_subfields[0]
-    else:
-        return None
 
 
 def pattern_match(subfield_list: list, pattern: str) -> bool:
