@@ -8,21 +8,6 @@ from record_validator.constants import AllFields, ValidOrderItems
 from record_validator.utils import get_subfield_from_code
 
 
-def get_extra_fields(tag_list: list, material_type: str) -> List[str]:
-    if material_type == "monograph":
-        return []
-    monograph_fields = AllFields.monograph_fields()
-    return [i for i in monograph_fields if i in tag_list]
-
-
-def get_missing_fields(tag_list: list, material_type: str) -> List[str]:
-    if material_type == "monograph":
-        required_fields = AllFields.monograph_fields() + AllFields.required_fields()
-    else:
-        required_fields = AllFields.required_fields()
-    return [i for i in required_fields if i not in tag_list]
-
-
 def get_order_item_list(
     fields: List[Union[MarcField, Dict[str, Any]]]
 ) -> List[Dict[str, Union[str, None]]]:
@@ -61,23 +46,6 @@ def get_tag_list(fields: list) -> list:
     elif all(isinstance(i, MarcField) for i in fields):
         all_fields.extend([i.tag for i in fields])
     return all_fields
-
-
-def validate_field_list(tag_list: list, material_type: str) -> list:
-    extra_fields = [
-        InitErrorDetails(
-            type=PydanticCustomError("extra_forbidden", f"Extra field: {tag}"),
-            input=tag,
-        )
-        for tag in get_extra_fields(tag_list, material_type)
-    ]
-    missing_fields = [
-        InitErrorDetails(
-            type=PydanticCustomError("missing", f"Field required: {tag}"), input=tag
-        )
-        for tag in get_missing_fields(tag_list, material_type)
-    ]
-    return extra_fields + missing_fields
 
 
 def validate_leader(input: Union[str, Leader]) -> str:

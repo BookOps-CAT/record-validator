@@ -4,49 +4,13 @@ import pytest
 from pymarc import Field as MarcField
 from pymarc import Subfield
 from record_validator.validators import (
-    get_extra_fields,
-    get_missing_fields,
     get_order_item_list,
     validate_order_items,
     get_tag_list,
-    validate_field_list,
     validate_leader,
     validate_fields,
     validate_all,
 )
-
-
-@pytest.mark.parametrize(
-    "type, expected", [("monograph", []), ("other", ["852", "949"])]
-)
-def test_get_extra_fields(type, expected):
-    extra_fields = get_extra_fields(
-        tag_list=[
-            "001",
-            "008",
-            "050",
-            "910",
-            "852",
-            "980",
-            "960",
-            "949",
-            "901",
-            "245",
-            "300",
-        ],
-        material_type=type,
-    )
-    assert extra_fields == expected
-
-
-@pytest.mark.parametrize("type, expected", [("monograph", ["901"]), ("other", ["901"])])
-def test_get_missing_fields(type, expected):
-    missing_fields = get_missing_fields(
-        tag_list=["001", "008", "050", "910", "852", "980", "960", "949"],
-        material_type=type,
-    )
-    assert len(missing_fields) == 1
-    assert missing_fields == expected
 
 
 def test_get_order_item_list_marc(stub_record):
@@ -169,21 +133,6 @@ def test_get_tag_list_dict(stub_record):
     assert sorted(get_tag_list(stub_record_dict["fields"])) == sorted(
         ["008", "001", "245", "050", "852", "960", "949", "300", "901", "910", "980"]
     )
-
-
-@pytest.mark.parametrize(
-    "type, field, error",
-    [("monograph", "852", "Field required"), ("other", "949", "Extra field")],
-)
-def test_validate_field_list(type, field, error):
-    tags = ["001", "008", "050", "910", "980", "901", "960", "949", "245", "300"]
-    errors = []
-    with does_not_raise():
-        errors.extend(validate_field_list(tag_list=tags, material_type=type))
-    assert len(errors) == 1
-    assert isinstance(errors, list)
-    assert str(errors[0]["type"]) == f"{error}: {field}"
-    assert errors[0]["input"] == field
 
 
 def test_validate_leader(stub_record):
