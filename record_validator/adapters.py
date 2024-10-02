@@ -24,28 +24,6 @@ from record_validator.field_models import (
 from record_validator.utils import get_subfield_from_code, get_vendor_code
 
 
-FieldAdapter: TypeAdapter = TypeAdapter(
-    Union[
-        AuxBibCallNo,
-        BibCallNo,
-        BibVendorCode,
-        ControlField001,
-        ControlField003,
-        ControlField005,
-        ControlField006,
-        ControlField007,
-        ControlField008,
-        InvoiceField,
-        ItemField,
-        LCClass,
-        LibraryField,
-        MonographDataField,
-        OrderField,
-        OtherDataField,
-    ]
-)
-
-
 def get_adapter(fields: list) -> tuple[str, TypeAdapter]:
     vendor = get_vendor_code(fields)
     vendor_code = vendor.lower() if vendor is not None else None

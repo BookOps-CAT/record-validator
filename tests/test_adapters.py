@@ -10,7 +10,6 @@ from record_validator.adapters import (
     AuxOtherFields,
     MonographFields,
     OtherFields,
-    FieldAdapter,
 )
 from record_validator.field_models import (
     AuxBibCallNo,
@@ -274,27 +273,3 @@ def test_OtherFields():
     assert (OtherDataField, Tag("data_field")) in union_args
     assert (OtherDataField, Tag("852")) in union_args
     assert (OtherDataField, Tag("949")) in union_args
-
-
-def test_FieldAdapter():
-    schema = FieldAdapter.json_schema(by_alias=True)
-    assert sorted([i for i in schema["$defs"].keys()]) == sorted(
-        [
-            "AuxBibCallNo",
-            "BibCallNo",
-            "BibVendorCode",
-            "ControlField001",
-            "ControlField003",
-            "ControlField005",
-            "ControlField006",
-            "ControlField007",
-            "ControlField008",
-            "InvoiceField",
-            "ItemField",
-            "LCClass",
-            "LibraryField",
-            "MonographDataField",
-            "OrderField",
-            "OtherDataField",
-        ]
-    )

@@ -18,6 +18,7 @@ from record_validator.field_models import (
     MonographDataField,
     OrderField,
     OtherDataField,
+    FieldAdapter,
 )
 
 
@@ -1648,3 +1649,27 @@ def test_OtherDataField_invalid_tag_literal(tag):
     error_types = [error["type"] for error in e.value.errors()]
     assert len(e.value.errors()) == 1
     assert error_types == ["string_pattern_mismatch"]
+
+
+def test_FieldAdapter():
+    schema = FieldAdapter.json_schema(by_alias=True)
+    assert sorted([i for i in schema["$defs"].keys()]) == sorted(
+        [
+            "AuxBibCallNo",
+            "BibCallNo",
+            "BibVendorCode",
+            "ControlField001",
+            "ControlField003",
+            "ControlField005",
+            "ControlField006",
+            "ControlField007",
+            "ControlField008",
+            "InvoiceField",
+            "ItemField",
+            "LCClass",
+            "LibraryField",
+            "MonographDataField",
+            "OrderField",
+            "OtherDataField",
+        ]
+    )

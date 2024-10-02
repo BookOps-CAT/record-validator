@@ -1,6 +1,6 @@
 from typing import Any, List, Tuple, Union
 from pydantic_core import ErrorDetails
-from record_validator.adapters import FieldAdapter
+from record_validator.field_models import FieldAdapter
 from record_validator.constants import AllFields, AllSubfields
 
 
