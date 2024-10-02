@@ -234,7 +234,7 @@ class TestMarcErrorMonograph:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "monograph", "852", "call_no")
+        assert error.loc == ("fields", "852", "call_no")
         assert error.input == "ReCAP-24-119100"
         assert isinstance(error.ctx, dict)
         assert error.type == "string_pattern_mismatch"
@@ -252,7 +252,6 @@ class TestMarcErrorMonograph:
         assert len(e.value.errors()) == 1
         assert error.loc == (
             "fields",
-            "monograph",
             "980",
         )
         assert error.ctx is None
@@ -266,7 +265,7 @@ class TestMarcErrorMonograph:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "monograph", "960", "order_location")
+        assert error.loc == ("fields", "960", "order_location")
         assert error.type == "missing"
         assert error.input == {
             "ind1": " ",
@@ -287,7 +286,7 @@ class TestMarcErrorMonograph:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "monograph", "960", "order_location")
+        assert error.loc == ("fields", "960", "order_location")
         assert error.input == "foo"
         assert isinstance(error.ctx, dict)
         assert error.type == "literal_error"
@@ -314,7 +313,7 @@ class TestMarcErrorMonograph:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "monograph", "960", "ind1")
+        assert error.loc == ("fields", "960", "ind1")
         assert error.input == "7"
         assert isinstance(error.ctx, dict)
         assert error.type == "literal_error"
@@ -338,7 +337,6 @@ class TestMarcErrorMonograph:
         assert len(e.value.errors()) == 1
         assert error.loc == (
             "fields",
-            "monograph",
             "050",
         )
         assert error.input == [" ", "0"]
@@ -367,7 +365,6 @@ class TestMarcErrorMonograph:
         assert len(string_type_error) == 1
         assert error.loc == (
             "fields",
-            "monograph",
             "003",
             "ind1",
         )
@@ -410,8 +407,8 @@ class TestMarcErrorMonograph:
         assert len(errors) == 2
         assert sorted(error_locs) == sorted(
             [
-                ("fields", "monograph", "960", "subfields", 0, "s"),
-                ("fields", "monograph", "960", "order_price"),
+                ("fields", "960", "subfields", 0, "s"),
+                ("fields", "960", "order_price"),
             ]
         )
         assert all(isinstance(i.input, float) for i in errors)
@@ -429,7 +426,7 @@ class TestMarcErrorOther:
             )
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "other", "960", "order_price")
+        assert error.loc == ("fields", "960", "order_price")
         assert error.input == "1.00"
         assert isinstance(error.ctx, dict)
         assert error.type == "string_pattern_mismatch"
@@ -446,7 +443,6 @@ class TestMarcErrorOther:
         assert len(e.value.errors()) == 1
         assert error.loc == (
             "fields",
-            "other",
             "980",
         )
         assert error.ctx is None
@@ -462,7 +458,7 @@ class TestMarcErrorOther:
             )
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "other", "960", "order_location")
+        assert error.loc == ("fields", "960", "order_location")
         assert error.type == "missing"
         assert error.input == {
             "ind1": " ",
@@ -485,7 +481,7 @@ class TestMarcErrorOther:
             )
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "other", "960", "order_location")
+        assert error.loc == ("fields", "960", "order_location")
         assert error.input == "foo"
         assert isinstance(error.ctx, dict)
         assert error.type == "literal_error"
@@ -514,7 +510,7 @@ class TestMarcErrorOther:
             )
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "other", "960", "ind1")
+        assert error.loc == ("fields", "960", "ind1")
         assert error.input == "7"
         assert isinstance(error.ctx, dict)
         assert error.type == "literal_error"
@@ -540,7 +536,6 @@ class TestMarcErrorOther:
         assert len(e.value.errors()) == 1
         assert error.loc == (
             "fields",
-            "other",
             "050",
         )
         assert error.input == [" ", "0"]
@@ -570,13 +565,13 @@ class TestMarcErrorOther:
         error_2 = MarcError(e.value.errors()[1])
         assert len(e.value.errors()) == 2
         assert error_1.type == "extra_forbidden"
-        assert error_1.loc == ("fields", "other", "852")
+        assert error_1.loc == ("fields", "852")
         assert error_1.input == "852"
         assert error_1.ctx is None
         assert error_1.msg == "Extra field: 852"
         assert error_1.loc_marc == "852"
         assert error_2.type == "extra_forbidden"
-        assert error_2.loc == ("fields", "other", "949")
+        assert error_2.loc == ("fields", "949")
         assert error_2.input == "949"
         assert error_2.ctx is None
         assert error_2.msg == "Extra field: 949"
@@ -596,8 +591,8 @@ class TestMarcErrorOther:
         assert len(errors) == 2
         assert sorted(error_locs) == sorted(
             [
-                ("fields", "other", "960", "subfields", 0, "s"),
-                ("fields", "other", "960", "order_price"),
+                ("fields", "960", "subfields", 0, "s"),
+                ("fields", "960", "order_price"),
             ]
         )
         assert all(isinstance(i.input, float) for i in errors)

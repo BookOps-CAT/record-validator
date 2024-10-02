@@ -5,11 +5,7 @@ from record_validator.constants import AllFields, AllSubfields
 
 
 def get_examples_from_schema(loc: tuple) -> Union[List[str], None]:
-    field = [
-        i
-        for i in loc
-        if isinstance(i, str) and i not in ["fields", "monograph", "other"]
-    ]
+    field = [i for i in loc if isinstance(i, str) and i != "fields"]
     model = field[0]
     if model not in [i.value for i in AllFields]:
         return None

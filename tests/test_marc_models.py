@@ -369,7 +369,7 @@ class TestRecordModelMonograph:
         assert e.value.errors()[0]["type"] == "order_item_mismatch"
 
 
-class TestRecordModelOther:
+class TestRecordModelPamphlet:
     def test_RecordModel_valid(self):
         model = RecordModel(
             leader="00000cam a2200000 a 4500",
