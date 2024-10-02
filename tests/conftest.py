@@ -185,3 +185,18 @@ def stub_multivol_record(stub_record):
     stub_record["300"].delete_subfield("a")
     stub_record["300"].add_subfield("a", "5 volumes")
     return stub_record
+
+
+@pytest.fixture
+def stub_aux_other_record(stub_record):
+    stub_record.remove_fields("901", "949")
+    stub_record.add_field(
+        MarcField(
+            tag="901",
+            indicators=[" ", " "],
+            subfields=[Subfield(code="a", value="AUXAM")],
+        )
+    )
+    stub_record["852"].delete_subfield("h")
+    stub_record["852"].add_subfield("h", "ReCAP 24-")
+    return stub_record

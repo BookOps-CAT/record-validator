@@ -3,6 +3,21 @@ from pydantic import Field, model_validator
 from record_validator.base_fields import BaseDataField, BaseControlField
 
 
+class AuxBibCallNo(BaseDataField):
+    tag: Annotated[Literal["852"], Field(alias="852")]
+    ind1: Literal["8"]
+    ind2: Literal[" ", ""]
+    subfields: List[Dict[str, str]]
+    call_no: Annotated[
+        str,
+        Field(
+            pattern=r"^ReCAP 23-$|^ReCAP 24-$|^ReCAP 25-$",
+            exclude=True,
+            examples=["ReCAP 23-", "ReCAP 24-", "ReCAP 25-"],
+        ),
+    ]
+
+
 class BibCallNo(BaseDataField):
     tag: Annotated[Literal["852"], Field(alias="852")]
     ind1: Literal["8"]
@@ -235,7 +250,7 @@ class LibraryField(BaseDataField):
     ]
 
 
-class MonographOtherField(BaseDataField):
+class MonographDataField(BaseDataField):
     tag: Annotated[
         str,
         Field(

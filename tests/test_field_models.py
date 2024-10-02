@@ -2,6 +2,7 @@ import pytest
 from pydantic import ValidationError
 from pymarc import Field as MarcField
 from record_validator.field_models import (
+    AuxBibCallNo,
     BibCallNo,
     BibVendorCode,
     ControlField001,
@@ -14,10 +15,121 @@ from record_validator.field_models import (
     ItemField,
     LCClass,
     LibraryField,
-    MonographOtherField,
+    MonographDataField,
     OrderField,
     OtherDataField,
 )
+
+
+@pytest.mark.parametrize(
+    "ind1_value, ind2_value, field_value",
+    [
+        (
+            "8",
+            " ",
+            "ReCAP 23-",
+        ),
+        (
+            "8",
+            "",
+            "ReCAP 23-",
+        ),
+        (
+            "8",
+            "",
+            "ReCAP 24-",
+        ),
+        (
+            "8",
+            "",
+            "ReCAP 25-",
+        ),
+    ],
+)
+def test_AuxBibCallNo_valid(ind1_value, ind2_value, field_value):
+    model = AuxBibCallNo(
+        tag="852", ind1=ind1_value, ind2=ind2_value, subfields=[{"h": field_value}]
+    )
+    assert model.model_dump(by_alias=True) == {
+        "852": {
+            "ind1": ind1_value,
+            "ind2": ind2_value,
+            "subfields": [{"h": field_value}],
+        }
+    }
+
+
+def test_AuxBibCallNo_valid_from_field(stub_aux_other_record):
+    field = stub_aux_other_record.get_fields("852")[0]
+    assert isinstance(field, MarcField)
+    model = AuxBibCallNo.model_validate(field, from_attributes=True)
+    assert model.model_dump(by_alias=True) == {
+        "852": {
+            "ind1": "8",
+            "ind2": " ",
+            "subfields": [{"h": "ReCAP 24-"}],
+        }
+    }
+
+
+@pytest.mark.parametrize(
+    "ind1_value, ind2_value",
+    [
+        (
+            "1",
+            "1",
+        ),
+        (
+            "0",
+            "0",
+        ),
+        (
+            "2",
+            "2",
+        ),
+    ],
+)
+def test_AuxBibCallNo_invalid_indicators(ind1_value, ind2_value):
+    with pytest.raises(ValidationError) as e:
+        AuxBibCallNo(
+            tag="852",
+            ind1=ind1_value,
+            ind2=ind2_value,
+            subfields=[{"h": "ReCAP 23-"}],
+        )
+    error_types = [i["type"] for i in e.value.errors()]
+    assert error_types.count("literal_error") == 2
+    assert len(e.value.errors()) == 2
+
+
+@pytest.mark.parametrize(
+    "field_value",
+    ["foo", "bar", "ReCAP 11-111111", "ReCAP 24-111111"],
+)
+def test_AuxBibCallNo_invalid_call_no_pattern(field_value):
+    with pytest.raises(ValidationError) as e:
+        AuxBibCallNo(tag="852", ind1="8", ind2=" ", subfields=[{"h": field_value}])
+    assert e.value.errors()[0]["type"] == "string_pattern_mismatch"
+    assert len(e.value.errors()) == 1
+
+
+@pytest.mark.parametrize(
+    "field_value",
+    [
+        1,
+        1.0,
+        None,
+        [],
+    ],
+)
+def test_AuxBibCallNo_invalid_call_no_type(field_value):
+    with pytest.raises(ValidationError) as e:
+        AuxBibCallNo(tag="852", ind1="8", ind2=" ", subfields=[{"h": field_value}])
+    error_types = [i["type"] for i in e.value.errors()]
+    error_locs = [i["loc"] for i in e.value.errors()]
+    assert sorted(error_types) == sorted(["string_type", "string_type"])
+    assert sorted(error_locs) == sorted([("subfields", 0, "h"), ("call_no",)])
+    assert len(e.value.errors()) == 2
 
 
 @pytest.mark.parametrize(
@@ -1338,8 +1450,8 @@ def test_LibraryField_invalid_library_field_type(field_value):
         "994",
     ],
 )
-def test_MonographOtherField_valid_tag_literal(tag):
-    model = MonographOtherField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
+def test_MonographDataField_valid_tag_literal(tag):
+    model = MonographDataField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
     model.model_dump(by_alias=True) == {
         tag: {
             "ind1": " ",
@@ -1366,9 +1478,9 @@ def test_MonographOtherField_valid_tag_literal(tag):
         "980",
     ],
 )
-def test_MonographOtherField_invalid_tag_literal(tag):
+def test_MonographDataField_invalid_tag_literal(tag):
     with pytest.raises(ValidationError) as e:
-        MonographOtherField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
+        MonographDataField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
     error_types = [error["type"] for error in e.value.errors()]
     assert len(e.value.errors()) == 1
     assert error_types == ["string_pattern_mismatch"]
