@@ -6,9 +6,9 @@ from record_validator.adapters import (
     get_adapter,
     tag_discriminator,
     AuxOtherFields,
+    FieldList,
     MonographFields,
     OtherFields,
-    FieldAdapter,
 )
 from record_validator.field_models import (
     AuxBibCallNo,
@@ -28,6 +28,16 @@ from record_validator.field_models import (
         ("evp_other", ["OtherDataField"]),
         ("leila_other", ["OtherDataField"]),
         ("other", ["OtherDataField"]),
+        (
+            None,
+            [
+                "AuxBibCallNo",
+                "BibCallNo",
+                "ItemField",
+                "MonographDataField",
+                "OtherDataField",
+            ],
+        ),
     ],
 )
 def test_get_adapter(record_type, additional_fields):
@@ -118,6 +128,14 @@ def test_AuxOtherFields():
     ]
 
 
+def test_FieldList():
+    assert isinstance(FieldList, tuple)
+    assert len(FieldList) == 16
+    assert AuxBibCallNo in FieldList
+    assert OtherDataField in FieldList
+    assert MonographDataField in FieldList
+
+
 def test_MonographFields():
     mono_field_names = [get_args(i)[0] for i in MonographFields]
     mono_tags = [get_args(i)[1] for i in MonographFields]
@@ -176,27 +194,3 @@ def test_OtherFields():
             "data_field",
         ]
     ]
-
-
-def test_FieldAdapter():
-    schema = FieldAdapter.json_schema(by_alias=True)
-    assert sorted([i for i in schema["$defs"].keys()]) == sorted(
-        [
-            "AuxBibCallNo",
-            "BibCallNo",
-            "BibVendorCode",
-            "ControlField001",
-            "ControlField003",
-            "ControlField005",
-            "ControlField006",
-            "ControlField007",
-            "ControlField008",
-            "InvoiceField",
-            "ItemField",
-            "LCClass",
-            "LibraryField",
-            "MonographDataField",
-            "OrderField",
-            "OtherDataField",
-        ]
-    )

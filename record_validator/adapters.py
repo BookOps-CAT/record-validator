@@ -22,15 +22,23 @@ from record_validator.field_models import (
 )
 
 
-def get_adapter(record_type: str) -> TypeAdapter:
+def get_adapter(record_type: Union[str, None]) -> TypeAdapter:
+    fields: tuple
+    discriminator = True
     match record_type:
         case "auxam_other":
             fields = AuxOtherFields
-        case record_type if "other" in record_type:
+        case "evp_other" | "leila_other" | "other":
             fields = OtherFields
+        case None:
+            fields = FieldList
+            discriminator = False
         case _:
             fields = MonographFields
-    return TypeAdapter(Annotated[Union[fields], Discriminator(tag_discriminator)])
+    if discriminator:
+        return TypeAdapter(Annotated[Union[fields], Discriminator(tag_discriminator)])
+    else:
+        return TypeAdapter(Union[fields])
 
 
 def tag_discriminator(field: Union[MarcField, dict]) -> str:
@@ -91,24 +99,21 @@ OtherFields = (
     Annotated[OtherDataField, Tag("data_field")],
 )
 
-
-FieldAdapter: TypeAdapter = TypeAdapter(
-    Union[
-        AuxBibCallNo,
-        BibCallNo,
-        BibVendorCode,
-        ControlField001,
-        ControlField003,
-        ControlField005,
-        ControlField006,
-        ControlField007,
-        ControlField008,
-        InvoiceField,
-        ItemField,
-        LCClass,
-        LibraryField,
-        MonographDataField,
-        OrderField,
-        OtherDataField,
-    ]
+FieldList = (
+    AuxBibCallNo,
+    BibCallNo,
+    BibVendorCode,
+    ControlField001,
+    ControlField003,
+    ControlField005,
+    ControlField006,
+    ControlField007,
+    ControlField008,
+    InvoiceField,
+    ItemField,
+    LCClass,
+    LibraryField,
+    MonographDataField,
+    OrderField,
+    OtherDataField,
 )
