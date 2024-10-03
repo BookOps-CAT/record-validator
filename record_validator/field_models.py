@@ -1,5 +1,5 @@
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
-from pydantic import Field, model_validator, TypeAdapter
+from pydantic import Field, model_validator
 from record_validator.base_fields import BaseDataField, BaseControlField
 
 
@@ -299,25 +299,3 @@ class OtherDataField(BaseDataField):
     ind1: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
     ind2: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
     subfields: List[Any]
-
-
-FieldAdapter: TypeAdapter = TypeAdapter(
-    Union[
-        AuxBibCallNo,
-        BibCallNo,
-        BibVendorCode,
-        ControlField001,
-        ControlField003,
-        ControlField005,
-        ControlField006,
-        ControlField007,
-        ControlField008,
-        InvoiceField,
-        ItemField,
-        LCClass,
-        LibraryField,
-        MonographDataField,
-        OrderField,
-        OtherDataField,
-    ]
-)
