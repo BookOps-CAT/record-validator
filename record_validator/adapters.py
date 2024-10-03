@@ -22,6 +22,17 @@ from record_validator.field_models import (
 )
 
 
+def get_adapter(record_type: str) -> TypeAdapter:
+    match record_type:
+        case "auxam_other":
+            fields = AuxOtherFields
+        case record_type if "other" in record_type:
+            fields = OtherFields
+        case _:
+            fields = MonographFields
+    return TypeAdapter(Annotated[Union[fields], Discriminator(tag_discriminator)])
+
+
 def tag_discriminator(field: Union[MarcField, dict]) -> str:
     tag = field.tag if isinstance(field, MarcField) else list(field.keys())[0]
     if tag in [i.value for i in AllFields]:
@@ -30,65 +41,56 @@ def tag_discriminator(field: Union[MarcField, dict]) -> str:
         return "data_field"
 
 
-AuxOtherFields = Annotated[
-    Union[
-        Annotated[ControlField001, Tag("001")],
-        Annotated[ControlField003, Tag("003")],
-        Annotated[ControlField005, Tag("005")],
-        Annotated[ControlField006, Tag("006")],
-        Annotated[ControlField007, Tag("007")],
-        Annotated[ControlField008, Tag("008")],
-        Annotated[LCClass, Tag("050")],
-        Annotated[AuxBibCallNo, Tag("852")],
-        Annotated[BibVendorCode, Tag("901")],
-        Annotated[LibraryField, Tag("910")],
-        Annotated[OtherDataField, Tag("949")],
-        Annotated[OrderField, Tag("960")],
-        Annotated[InvoiceField, Tag("980")],
-        Annotated[OtherDataField, Tag("data_field")],
-    ],
-    Discriminator(tag_discriminator),
-]
+AuxOtherFields = (
+    Annotated[ControlField001, Tag("001")],
+    Annotated[ControlField003, Tag("003")],
+    Annotated[ControlField005, Tag("005")],
+    Annotated[ControlField006, Tag("006")],
+    Annotated[ControlField007, Tag("007")],
+    Annotated[ControlField008, Tag("008")],
+    Annotated[LCClass, Tag("050")],
+    Annotated[AuxBibCallNo, Tag("852")],
+    Annotated[BibVendorCode, Tag("901")],
+    Annotated[LibraryField, Tag("910")],
+    Annotated[OtherDataField, Tag("949")],
+    Annotated[OrderField, Tag("960")],
+    Annotated[InvoiceField, Tag("980")],
+    Annotated[OtherDataField, Tag("data_field")],
+)
 
-MonographFields = Annotated[
-    Union[
-        Annotated[ControlField001, Tag("001")],
-        Annotated[ControlField003, Tag("003")],
-        Annotated[ControlField005, Tag("005")],
-        Annotated[ControlField006, Tag("006")],
-        Annotated[ControlField007, Tag("007")],
-        Annotated[ControlField008, Tag("008")],
-        Annotated[LCClass, Tag("050")],
-        Annotated[BibCallNo, Tag("852")],
-        Annotated[BibVendorCode, Tag("901")],
-        Annotated[LibraryField, Tag("910")],
-        Annotated[ItemField, Tag("949")],
-        Annotated[OrderField, Tag("960")],
-        Annotated[InvoiceField, Tag("980")],
-        Annotated[MonographDataField, Tag("data_field")],
-    ],
-    Discriminator(tag_discriminator),
-]
+MonographFields = (
+    Annotated[ControlField001, Tag("001")],
+    Annotated[ControlField003, Tag("003")],
+    Annotated[ControlField005, Tag("005")],
+    Annotated[ControlField006, Tag("006")],
+    Annotated[ControlField007, Tag("007")],
+    Annotated[ControlField008, Tag("008")],
+    Annotated[LCClass, Tag("050")],
+    Annotated[BibCallNo, Tag("852")],
+    Annotated[BibVendorCode, Tag("901")],
+    Annotated[LibraryField, Tag("910")],
+    Annotated[ItemField, Tag("949")],
+    Annotated[OrderField, Tag("960")],
+    Annotated[InvoiceField, Tag("980")],
+    Annotated[MonographDataField, Tag("data_field")],
+)
+OtherFields = (
+    Annotated[ControlField001, Tag("001")],
+    Annotated[ControlField003, Tag("003")],
+    Annotated[ControlField005, Tag("005")],
+    Annotated[ControlField006, Tag("006")],
+    Annotated[ControlField007, Tag("007")],
+    Annotated[ControlField008, Tag("008")],
+    Annotated[LCClass, Tag("050")],
+    Annotated[OtherDataField, Tag("852")],
+    Annotated[BibVendorCode, Tag("901")],
+    Annotated[LibraryField, Tag("910")],
+    Annotated[OtherDataField, Tag("949")],
+    Annotated[OrderField, Tag("960")],
+    Annotated[InvoiceField, Tag("980")],
+    Annotated[OtherDataField, Tag("data_field")],
+)
 
-OtherFields = Annotated[
-    Union[
-        Annotated[ControlField001, Tag("001")],
-        Annotated[ControlField003, Tag("003")],
-        Annotated[ControlField005, Tag("005")],
-        Annotated[ControlField006, Tag("006")],
-        Annotated[ControlField007, Tag("007")],
-        Annotated[ControlField008, Tag("008")],
-        Annotated[LCClass, Tag("050")],
-        Annotated[OtherDataField, Tag("852")],
-        Annotated[BibVendorCode, Tag("901")],
-        Annotated[LibraryField, Tag("910")],
-        Annotated[OtherDataField, Tag("949")],
-        Annotated[OrderField, Tag("960")],
-        Annotated[InvoiceField, Tag("980")],
-        Annotated[OtherDataField, Tag("data_field")],
-    ],
-    Discriminator(tag_discriminator),
-]
 
 FieldAdapter: TypeAdapter = TypeAdapter(
     Union[
