@@ -4,6 +4,70 @@ from pymarc import Field as MarcField
 
 
 @pytest.fixture
+def stub_call_no():
+    return MarcField(
+        tag="852",
+        indicators=["8", " "],
+        subfields=[Subfield(code="h", value="ReCAP 24-119100")],
+    )
+
+
+@pytest.fixture
+def stub_order():
+    return MarcField(
+        tag="960",
+        indicators=[" ", " "],
+        subfields=[
+            Subfield(code="s", value="200"),
+            Subfield(code="t", value="MAF"),
+            Subfield(code="u", value="123456apprv"),
+        ],
+    )
+
+
+@pytest.fixture
+def stub_auxam_item():
+    return MarcField(
+        tag="949",
+        indicators=[" ", "1"],
+        subfields=[
+            Subfield(code="z", value="8528"),
+            Subfield(code="a", value="ReCAP 23-100000"),
+            Subfield(code="c", value="1"),
+            Subfield(code="h", value="43"),
+            Subfield(code="i", value="33433123456789"),
+            Subfield(code="l", value="rcmf2"),
+            Subfield(code="m", value="bar"),
+            Subfield(code="p", value="1.00"),
+            Subfield(code="t", value="55"),
+            Subfield(code="u", value="foo"),
+            Subfield(code="v", value="AUXAM"),
+        ],
+    )
+
+
+@pytest.fixture
+def stub_evp_item():
+    return MarcField(
+        tag="949",
+        indicators=[" ", "1"],
+        subfields=[
+            Subfield(code="z", value="8528"),
+            Subfield(code="a", value="ReCAP 23-100000"),
+            Subfield(code="c", value="1"),
+            Subfield(code="h", value="43"),
+            Subfield(code="i", value="33433123456789"),
+            Subfield(code="l", value="rcmf2"),
+            Subfield(code="m", value="bar"),
+            Subfield(code="p", value="1.00"),
+            Subfield(code="t", value="55"),
+            Subfield(code="u", value="foo"),
+            Subfield(code="v", value="EVP"),
+        ],
+    )
+
+
+@pytest.fixture
 def stub_record():
     bib = Record()
     bib.leader = "00454cam a22001575i 4500"

@@ -1,8 +1,7 @@
 import pytest
 from pydantic import ValidationError
 from contextlib import nullcontext as does_not_raise
-from pymarc import Field as MarcField
-from pymarc import Subfield, Leader, MARCReader
+from pymarc import Leader, MARCReader
 from record_validator.marc_models import RecordModel
 
 
@@ -93,56 +92,23 @@ class TestRecordModelMonograph:
         with does_not_raise():
             RecordModel(**record_dict)
 
-    def test_RecordModel_from_marc_multiple_items(self, stub_record):
-        stub_record.add_field(
-            MarcField(
-                tag="949",
-                indicators=[" ", "1"],
-                subfields=[
-                    Subfield(code="z", value="8528"),
-                    Subfield(code="a", value="ReCAP 24-000000"),
-                    Subfield(code="i", value="33433123456789"),
-                    Subfield(code="p", value="1.00"),
-                    Subfield(code="v", value="EVP"),
-                    Subfield(code="h", value="43"),
-                    Subfield(code="l", value="rcmf2"),
-                    Subfield(code="t", value="55"),
-                ],
-            )
-        )
+    def test_RecordModel_from_marc_multiple_items(self, stub_record, stub_evp_item):
+        stub_record.add_field(stub_evp_item)
         with does_not_raise():
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
 
-    def test_RecordModel_from_marc_dict_multiple_items(self, stub_record):
-        stub_record.add_field(
-            MarcField(
-                tag="949",
-                indicators=[" ", "1"],
-                subfields=[
-                    Subfield(code="z", value="8528"),
-                    Subfield(code="a", value="ReCAP 24-000000"),
-                    Subfield(code="i", value="33433123456789"),
-                    Subfield(code="p", value="1.00"),
-                    Subfield(code="v", value="EVP"),
-                    Subfield(code="h", value="43"),
-                    Subfield(code="l", value="rcmf2"),
-                    Subfield(code="t", value="55"),
-                ],
-            )
-        )
+    def test_RecordModel_from_marc_dict_multiple_items(
+        self, stub_record, stub_evp_item
+    ):
+        stub_record.add_field(stub_evp_item)
         record_dict = stub_record.as_dict()
         with does_not_raise():
             RecordModel(**record_dict)
 
     def test_RecordModel_from_marc_invalid(self, stub_record):
-        stub_record.remove_fields("901", "852")
-        stub_record.add_field(
-            MarcField(
-                tag="852",
-                indicators=["8", " "],
-                subfields=[Subfield(code="h", value="foo")],
-            )
-        )
+        stub_record.remove_fields("901")
+        stub_record["852"].delete_subfield("h")
+        stub_record["852"].add_subfield("h", "foo")
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         assert len(e.value.errors()) == 2
@@ -222,28 +188,16 @@ class TestRecordModelMonograph:
         assert [i["type"] for i in e.value.errors()] == ["missing"]
 
     def test_RecordModel_string_pattern_mismatch(self, stub_record):
-        stub_record.remove_fields("852")
-        stub_record.add_field(
-            MarcField(
-                tag="852",
-                indicators=["8", " "],
-                subfields=[Subfield(code="h", value="foo")],
-            )
-        )
+        stub_record["852"].delete_subfield("h")
+        stub_record["852"].add_subfield("h", "foo")
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         assert len(e.value.errors()) == 1
         assert [i["type"] for i in e.value.errors()] == ["string_pattern_mismatch"]
 
     def test_RecordModel_literal_error(self, stub_record):
-        stub_record.remove_fields("901")
-        stub_record.add_field(
-            MarcField(
-                tag="901",
-                indicators=[" ", " "],
-                subfields=[Subfield(code="a", value="foo")],
-            )
-        )
+        stub_record["901"].delete_subfield("a")
+        stub_record["901"].add_subfield("a", "foo")
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         assert len(e.value.errors()) == 1
@@ -498,14 +452,8 @@ class TestRecordModelPamphlet:
         assert [i["type"] for i in e.value.errors()] == ["string_pattern_mismatch"]
 
     def test_RecordModel_literal_error(self, stub_pamphlet_record):
-        stub_pamphlet_record.remove_fields("901")
-        stub_pamphlet_record.add_field(
-            MarcField(
-                tag="901",
-                indicators=[" ", " "],
-                subfields=[Subfield(code="a", value="foo")],
-            )
-        )
+        stub_pamphlet_record["901"].delete_subfield("a")
+        stub_pamphlet_record["901"].add_subfield("a", "foo")
         with pytest.raises(ValidationError) as e:
             RecordModel(
                 leader=stub_pamphlet_record.leader, fields=stub_pamphlet_record.fields

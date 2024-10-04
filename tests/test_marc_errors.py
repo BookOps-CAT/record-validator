@@ -1,6 +1,4 @@
 import pytest
-from pymarc import Subfield
-from pymarc import Field as MarcField
 from pydantic import ValidationError
 from record_validator.marc_errors import (
     get_examples_from_schema,
@@ -222,14 +220,8 @@ def test_get_examples_from_schema(field, examples):
 
 class TestMarcErrorMonograph:
     def test_MarcError_string_pattern(self, stub_record):
-        stub_record.remove_fields("852")
-        stub_record.add_field(
-            MarcField(
-                tag="852",
-                indicators=["8", " "],
-                subfields=[Subfield(code="h", value="ReCAP-24-119100")],
-            )
-        )
+        stub_record["852"].delete_subfield("h")
+        stub_record["852"].add_subfield("h", "ReCAP-24-119100")
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
@@ -297,18 +289,7 @@ class TestMarcErrorMonograph:
         assert error.loc_marc == "960$t"
 
     def test_MarcError_literal_indicator_error(self, stub_record):
-        stub_record.remove_fields("960")
-        stub_record.add_field(
-            MarcField(
-                tag="960",
-                indicators=["7", " "],
-                subfields=[
-                    Subfield(code="s", value="100"),
-                    Subfield(code="t", value="MAF"),
-                    Subfield(code="u", value="123456apprv"),
-                ],
-            )
-        )
+        stub_record["960"].indicator1 = "7"
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
@@ -321,16 +302,7 @@ class TestMarcErrorMonograph:
         assert error.loc_marc == "960ind1"
 
     def test_MarcError_lcc_indicator_error(self, stub_record):
-        stub_record.remove_fields("050")
-        stub_record.add_field(
-            MarcField(
-                tag="050",
-                indicators=[" ", "0"],
-                subfields=[
-                    Subfield(code="a", value="F00"),
-                ],
-            )
-        )
+        stub_record["050"].indicator2 = "0"
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
@@ -492,18 +464,7 @@ class TestMarcErrorOther:
         assert error.loc_marc == "960$t"
 
     def test_MarcError_literal_indicator_error(self, stub_pamphlet_record):
-        stub_pamphlet_record.remove_fields("960")
-        stub_pamphlet_record.add_field(
-            MarcField(
-                tag="960",
-                indicators=["7", " "],
-                subfields=[
-                    Subfield(code="s", value="100"),
-                    Subfield(code="t", value="MAF"),
-                    Subfield(code="u", value="123456apprv"),
-                ],
-            )
-        )
+        stub_pamphlet_record["960"].indicator1 = "7"
         with pytest.raises(ValidationError) as e:
             RecordModel(
                 leader=stub_pamphlet_record.leader, fields=stub_pamphlet_record.fields
@@ -518,16 +479,7 @@ class TestMarcErrorOther:
         assert error.loc_marc == "960ind1"
 
     def test_MarcError_lcc_indicator_error(self, stub_pamphlet_record):
-        stub_pamphlet_record.remove_fields("050")
-        stub_pamphlet_record.add_field(
-            MarcField(
-                tag="050",
-                indicators=[" ", "0"],
-                subfields=[
-                    Subfield(code="a", value="F00"),
-                ],
-            )
-        )
+        stub_pamphlet_record["050"].indicator2 = "0"
         with pytest.raises(ValidationError) as e:
             RecordModel(
                 leader=stub_pamphlet_record.leader, fields=stub_pamphlet_record.fields
@@ -548,16 +500,8 @@ class TestMarcErrorOther:
         assert error.loc_marc == "050"
 
     def test_MarcError_extra_fields(self, stub_record):
-        stub_record.remove_fields("300")
-        stub_record.add_field(
-            MarcField(
-                tag="300",
-                indicators=[" ", " "],
-                subfields=[
-                    Subfield(code="a", value="5 pages :"),
-                ],
-            )
-        )
+        stub_record["300"].delete_subfield("a")
+        stub_record["300"].add_subfield("a", "5 pages")
         record_dict = stub_record.as_dict()
         with pytest.raises(ValidationError) as e:
             RecordModel(**record_dict)
@@ -779,16 +723,8 @@ class TestMarcValidationErrorOther:
         assert len(errors["order_item_mismatches"]) == 0
 
     def test_MarcValidationError_extra_fields(self, stub_record):
-        stub_record.remove_fields("300")
-        stub_record.add_field(
-            MarcField(
-                tag="300",
-                indicators=[" ", " "],
-                subfields=[
-                    Subfield(code="a", value="5 pages :"),
-                ],
-            )
-        )
+        stub_record["300"].delete_subfield("a")
+        stub_record["300"].add_subfield("a", "5 pages :")
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         errors = MarcValidationError(e.value.errors()).to_dict()
@@ -802,17 +738,13 @@ class TestMarcValidationErrorOther:
         assert errors["extra_fields"] == ["852", "949"]
         assert errors["order_item_mismatches"] == []
 
-    def test_MarcValidationError_multiple_errors(self, stub_pamphlet_record):
+    def test_MarcValidationError_multiple_errors(
+        self, stub_pamphlet_record, stub_call_no
+    ):
         stub_pamphlet_record.remove_fields("980")
         stub_pamphlet_record["960"].delete_subfield("t")
         stub_pamphlet_record["960"].add_subfield("t", "FOO")
-        stub_pamphlet_record.add_field(
-            MarcField(
-                tag="852",
-                indicators=["8", " "],
-                subfields=[Subfield(code="h", value="ReCAP 24-119100")],
-            )
-        )
+        stub_pamphlet_record.add_field(stub_call_no)
         with pytest.raises(ValidationError) as e:
             RecordModel(
                 leader=stub_pamphlet_record.leader, fields=stub_pamphlet_record.fields
