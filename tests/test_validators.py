@@ -81,7 +81,12 @@ class TestValidateMonograph:
         stub_record["960"].add_subfield("t", "MAL")
         errors = []
         with does_not_raise():
-            errors.extend(validate_order_items(stub_record.as_dict()["fields"]))
+            errors.extend(
+                validate_order_items(
+                    fields=stub_record.as_dict()["fields"],
+                    error_locs=[],
+                )
+            )
         assert len(errors) == 1
         assert isinstance(errors, list)
         assert (
@@ -97,7 +102,12 @@ class TestValidateMonograph:
     def test_validate_order_items_no_errors(self, stub_record):
         errors = []
         with does_not_raise():
-            errors.extend(validate_order_items(stub_record.as_dict()["fields"]))
+            errors.extend(
+                validate_order_items(
+                    fields=stub_record.as_dict()["fields"],
+                    error_locs=[],
+                )
+            )
         assert len(errors) == 0
 
     def test_validate_fields_extra(self, stub_record, stub_order):

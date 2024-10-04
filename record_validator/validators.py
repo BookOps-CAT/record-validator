@@ -17,30 +17,21 @@ def validate_all(
     fields: List[Union[MarcField, Dict[str, Any]]]
 ) -> List[Union[MarcField, Dict[str, Any]]]:
     """Validate MARC record fields."""
+    errors = []
     record_type = get_record_type(fields)
-    field_errors = validate_fields(fields, record_type=record_type)
+    errors.extend(validate_fields(fields, record_type=record_type))
     adapter = get_adapter(record_type)
-    validation_errors = []
     for field in fields:
         try:
             adapter.validate_python(field, from_attributes=True)
         except ValidationError as e:
-            validation_errors.extend(e.errors())
-    errors = field_errors + validation_errors
-    error_locs = [str(i["loc"][-1]) for i in validation_errors if "loc" in i]
-    tag_list = [next(iter(field2dict(i))) for i in fields]
-    if (
-        "monograph" in record_type
-        and not any(i not in tag_list for i in ["960", "949"])
-        and not any(tag_list.count(i) > 1 for i in AllFields.non_repeatable_fields())
-        and not any(
-            i in error_locs for i in ["item_location", "item_type", "order_location"]
-        )
-    ):
-        errors.extend(validate_order_items(fields))
+            errors.extend(e.errors())  # type: ignore
+    error_locs = [str(i["loc"][-1]) for i in errors if "loc" in i]
+    if "monograph" in record_type:
+        errors.extend(validate_order_items(fields, error_locs))
     if len(errors) > 0:
         raise ValidationError.from_exception_data(
-            title=fields.__class__.__name__, line_errors=errors  # type: ignore
+            title=fields.__class__.__name__, line_errors=errors
         )
     else:
         return fields
@@ -85,10 +76,19 @@ def validate_leader(input: Union[str, Leader]) -> str:
 
 
 def validate_order_items(
-    fields: List[Union[MarcField, Dict[str, Any]]]
+    fields: List[Union[MarcField, Dict[str, Any]]], error_locs: List[str]
 ) -> List[InitErrorDetails]:
-    errors = []
     field_list = [field2dict(i) for i in fields]
+    tag_list = [next(iter(i)) for i in field_list]
+    if (
+        any(i not in tag_list for i in ["960", "949"])
+        or any(tag_list.count(i) > 1 for i in AllFields.non_repeatable_fields())
+        or any(
+            i in error_locs for i in ["item_location", "item_type", "order_location"]
+        )
+    ):
+        return []
+    errors = []
     order_locs = [dict2subfield(i, "t") for i in field_list if "960" in i]
     item_locs = [dict2subfield(i, "l") for i in field_list if "949" in i]
     item_types = [dict2subfield(i, "t") for i in field_list if "949" in i]
