@@ -5,47 +5,6 @@ from pydantic import ValidationError
 from pydantic_core import PydanticCustomError, InitErrorDetails
 from record_validator.adapters import get_adapter
 from record_validator.constants import AllFields, ValidOrderItems
-from record_validator.utils import get_subfield_from_code
-
-
-def get_order_item_list(
-    fields: List[Union[MarcField, Dict[str, Any]]]
-) -> List[Dict[str, Union[str, None]]]:
-    order_locations: List[Union[str, None]] = []
-    item_locations: List[Union[str, None]] = []
-    item_types: List[Union[str, None]] = []
-    for field in fields:
-        if (isinstance(field, MarcField) and field.tag == "960") or (
-            isinstance(field, dict)
-            and ("960" in field or ("tag" in field and field["tag"] == "960"))
-        ):
-            order_locations.extend(
-                get_subfield_from_code(field=field, code="t", tag="960")
-            )
-        elif (isinstance(field, MarcField) and field.tag == "949") or (
-            isinstance(field, dict)
-            and ("949" in field or ("tag" in field and field["tag"] == "949"))
-        ):
-            item_locations.extend(
-                get_subfield_from_code(field=field, code="l", tag="949")
-            )
-            item_types.extend(get_subfield_from_code(field=field, code="t", tag="949"))
-    order_count = len(order_locations)
-    assert order_count == 1, f"Expected 1 order location, got {order_count}"
-    result = [
-        {"order_location": order_locations[0], "item_location": il, "item_type": it}
-        for il, it in zip(item_locations, item_types)
-    ]
-    return result
-
-
-def get_tag_list(fields: list) -> list:
-    all_fields = []
-    if all(isinstance(i, dict) for i in fields):
-        all_fields.extend([key for i in fields for key in i.keys()])
-    elif all(isinstance(i, MarcField) for i in fields):
-        all_fields.extend([i.tag for i in fields])
-    return all_fields
 
 
 def validate_all(fields: list) -> list:
