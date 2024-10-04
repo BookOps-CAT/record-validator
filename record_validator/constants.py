@@ -45,6 +45,22 @@ class AllFields(Enum):
     def monograph_fields(cls):
         return [cls.BibCallNo.value, cls.ItemField.value]
 
+    @classmethod
+    def non_repeatable_fields(cls):
+        return [
+            cls.BibCallNo.value,
+            cls.BibVendorCode.value,
+            cls.ControlField001.value,
+            cls.ControlField003.value,
+            cls.ControlField005.value,
+            cls.ControlField006.value,
+            cls.ControlField007.value,
+            cls.ControlField008.value,
+            cls.InvoiceField.value,
+            cls.LibraryField.value,
+            cls.OrderField.value,
+        ]
+
 
 class AllSubfields(Enum):
     call_no = "h"

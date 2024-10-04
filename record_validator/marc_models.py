@@ -1,20 +1,13 @@
 """This module contains pydantic models for validating vendor-provided MARC records."""
 
 from typing import Annotated, Dict, List, Union
-from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from pymarc import Field as MarcField
 from record_validator.validators import (
     validate_leader,
-    validate_monograph,
-    validate_other,
+    validate_all,
 )
-from record_validator.adapters import get_material_type
-
-RecordFields = Union[
-    List[MarcField],
-    List[Dict[str, Union[str, Dict[str, Union[str, List[Dict[str, str]]]]]]],
-]
 
 
 class RecordModel(BaseModel):
@@ -33,10 +26,8 @@ class RecordModel(BaseModel):
     ]
     fields: Annotated[
         Union[
-            Annotated[
-                RecordFields, AfterValidator(validate_monograph), Tag("monograph")
-            ],
-            Annotated[RecordFields, AfterValidator(validate_other), Tag("other")],
+            List[MarcField],
+            List[Dict[str, Union[str, Dict[str, Union[str, List[Dict[str, str]]]]]]],
         ],
-        Discriminator(get_material_type),
+        AfterValidator(validate_all),
     ]

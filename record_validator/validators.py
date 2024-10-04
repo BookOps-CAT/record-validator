@@ -1,68 +1,110 @@
+from itertools import chain
 from typing import Any, Dict, List, Union
-from pymarc import Field as MarcField
 from pymarc import Leader
+from pymarc import Field as MarcField
 from pydantic import ValidationError
 from pydantic_core import PydanticCustomError, InitErrorDetails
-from record_validator.adapters import (
-    MonographRecordAdapter,
-    OtherRecordAdapter,
+from record_validator.adapters import get_adapter
+from record_validator.utils import (
+    get_record_type,
+    field2dict,
+    dict2subfield,
 )
 from record_validator.constants import AllFields, ValidOrderItems
 
 
-def get_extra_fields(tag_list: list, material_type: str) -> List[str]:
-    if material_type == "monograph":
-        return []
-    monograph_fields = AllFields.monograph_fields()
-    return [i for i in monograph_fields if i in tag_list]
-
-
-def get_missing_fields(tag_list: list, material_type: str) -> List[str]:
-    if material_type == "monograph":
-        required_fields = AllFields.monograph_fields() + AllFields.required_fields()
-    else:
-        required_fields = AllFields.required_fields()
-    return [i for i in required_fields if i not in tag_list]
-
-
-def get_order_item_list(
+def validate_all(
     fields: List[Union[MarcField, Dict[str, Any]]]
-) -> List[Dict[str, Union[str, None]]]:
-    order_locations: List[Union[str, None]] = []
-    item_locations: List[Union[str, None]] = []
-    item_types: List[Union[str, None]] = []
-    for field in fields:
-        if (isinstance(field, MarcField) and field.tag == "960") or (
-            isinstance(field, dict)
-            and ("960" in field or ("tag" in field and field["tag"] == "960"))
-        ):
-            order_locations.extend(
-                get_subfield_from_code(field=field, code="t", tag="960")
-            )
-        elif (isinstance(field, MarcField) and field.tag == "949") or (
-            isinstance(field, dict)
-            and ("949" in field or ("tag" in field and field["tag"] == "949"))
-        ):
-            item_locations.extend(
-                get_subfield_from_code(field=field, code="l", tag="949")
-            )
-            item_types.extend(get_subfield_from_code(field=field, code="t", tag="949"))
-    order_count = len(order_locations)
-    assert order_count == 1, f"Expected 1 order location, got {order_count}"
-    result = [
-        {"order_location": order_locations[0], "item_location": il, "item_type": it}
-        for il, it in zip(item_locations, item_types)
-    ]
-    return result
-
-
-def get_order_item_mismatches(fields: List[Union[MarcField, Dict[str, Any]]]) -> list:
-    error_msg = "Invalid combination of item_type, order_location and item_location"
+) -> List[Union[MarcField, Dict[str, Any]]]:
+    """Validate MARC record fields."""
     errors = []
-    order_items = get_order_item_list(fields)
-    invalid_order_items = [i for i in order_items if i not in ValidOrderItems.to_list()]
+    record_type = get_record_type(fields)
+    errors.extend(validate_fields(fields, record_type=record_type))
+    adapter = get_adapter(record_type)
+    for field in fields:
+        try:
+            adapter.validate_python(field, from_attributes=True)
+        except ValidationError as e:
+            errors.extend(e.errors())  # type: ignore
+    error_locs = [str(i["loc"][-1]) for i in errors if "loc" in i]
+    if "monograph" in record_type:
+        errors.extend(validate_order_items(fields, error_locs))
+    if len(errors) > 0:
+        raise ValidationError.from_exception_data(
+            title=fields.__class__.__name__, line_errors=errors
+        )
+    else:
+        return fields
 
-    for order_item in invalid_order_items:
+
+def validate_fields(
+    fields: List[Union[MarcField, Dict[str, Any]]], record_type: str
+) -> List[InitErrorDetails]:
+    tag_list = [next(iter(field2dict(i))) for i in fields]
+    required_tags = AllFields.required_fields()
+    extra_tags = []
+    if record_type == "auxam_other":
+        extra_tags.append("949")
+    elif "other" in record_type:
+        extra_tags.extend(AllFields.monograph_fields())
+    elif "monograph" in record_type:
+        required_tags.extend(AllFields.monograph_fields())
+    extra_fields = [i for i in extra_tags if i in tag_list]
+    missing_fields = [i for i in required_tags if i not in tag_list]
+    repeated_fields = [
+        i for i in AllFields.non_repeatable_fields() if tag_list.count(i) > 1
+    ]
+    extra_field_errors = [
+        InitErrorDetails(
+            type=PydanticCustomError("extra_forbidden", f"Extra field: {tag}"),
+            input=tag,
+        )
+        for tag in extra_fields + repeated_fields
+    ]
+    missing_field_errors = [
+        InitErrorDetails(
+            type=PydanticCustomError("missing", f"Field required: {tag}"), input=tag
+        )
+        for tag in missing_fields
+    ]
+    return extra_field_errors + missing_field_errors
+
+
+def validate_leader(input: Union[str, Leader]) -> str:
+    """Validate the leader."""
+    return str(input)
+
+
+def validate_order_items(
+    fields: List[Union[MarcField, Dict[str, Any]]], error_locs: List[str]
+) -> List[InitErrorDetails]:
+    field_list = [field2dict(i) for i in fields]
+    tag_list = [next(iter(i)) for i in field_list]
+    if (
+        any(i not in tag_list for i in ["960", "949"])
+        or any(tag_list.count(i) > 1 for i in AllFields.non_repeatable_fields())
+        or any(
+            i in error_locs for i in ["item_location", "item_type", "order_location"]
+        )
+    ):
+        return []
+    errors = []
+    order_locs = [dict2subfield(i, "t") for i in field_list if "960" in i]
+    item_locs = [dict2subfield(i, "l") for i in field_list if "949" in i]
+    item_types = [dict2subfield(i, "t") for i in field_list if "949" in i]
+    assert len(order_locs) == 1, f"Expected 1 order location, got {len(order_locs)}"
+    order_items = [
+        {
+            "order_location": list(chain(*order_locs))[0],
+            "item_location": il,
+            "item_type": it,
+        }
+        for il, it in zip(list(chain(*item_locs)), list(chain(*item_types)))
+    ]
+    invalid_combos = [i for i in order_items if i not in ValidOrderItems.to_list()]
+    error_msg = "Invalid combination of item_type, order_location and item_location"
+
+    for order_item in invalid_combos:
         errors.append(
             InitErrorDetails(
                 type=PydanticCustomError(
@@ -72,101 +114,3 @@ def get_order_item_mismatches(fields: List[Union[MarcField, Dict[str, Any]]]) ->
             )
         )
     return errors
-
-
-def get_subfield_from_code(
-    field: Union[MarcField, dict],
-    tag: str,
-    code: str,
-) -> Union[list[str], list[None]]:
-    if not isinstance(field, (MarcField, dict)):
-        return None
-    elif isinstance(field, MarcField):
-        subfields = [i[1] for i in field.subfields if code == i[0]]
-    else:
-        all_subfields = (
-            field.get("subfields") if "tag" in field else field[tag].get("subfields")
-        )
-        subfields = [i[code] for i in all_subfields if code in i.keys()]
-    if subfields == []:
-        return [None]
-    else:
-        return subfields
-
-
-def get_tag_list(fields: list) -> list:
-    all_fields = []
-    if all(isinstance(i, dict) for i in fields):
-        all_fields.extend([key for i in fields for key in i.keys()])
-    elif all(isinstance(i, MarcField) for i in fields):
-        all_fields.extend([i.tag for i in fields])
-    return all_fields
-
-
-def validate_field_list(tag_list: list, material_type: str) -> list:
-    extra_fields = [
-        InitErrorDetails(
-            type=PydanticCustomError("extra_forbidden", f"Extra field: {tag}"),
-            input=tag,
-        )
-        for tag in get_extra_fields(tag_list, material_type)
-    ]
-    missing_fields = [
-        InitErrorDetails(
-            type=PydanticCustomError("missing", f"Field required: {tag}"), input=tag
-        )
-        for tag in get_missing_fields(tag_list, material_type)
-    ]
-    return extra_fields + missing_fields
-
-
-def validate_leader(input: Union[str, Leader]) -> str:
-    """Validate the leader."""
-    return str(input)
-
-
-def validate_monograph(fields: list) -> list:
-    """Validate MARC record fields."""
-    validation_errors = []
-    tags = get_tag_list(fields)
-
-    validation_errors.extend(validate_field_list(tags, material_type="monograph"))
-
-    for field in fields:
-        try:
-            MonographRecordAdapter.validate_python(field, from_attributes=True)
-        except ValidationError as e:
-            validation_errors.extend(e.errors())
-    if ("960" in tags and "949" in tags) and all(
-        loc not in [i["loc"][-1] for i in validation_errors if "loc" in i]
-        for loc in ["item_location", "item_type", "order_location"]
-    ):
-        order_item_errors = get_order_item_mismatches(fields)
-        validation_errors.extend(order_item_errors)
-
-    if len(validation_errors) > 0:
-        raise ValidationError.from_exception_data(
-            title=fields.__class__.__name__, line_errors=validation_errors
-        )
-    else:
-        return fields
-
-
-def validate_other(fields: list) -> list:
-    """Validate MARC record fields."""
-    validation_errors = []
-    tags = get_tag_list(fields)
-
-    validation_errors.extend(validate_field_list(tags, material_type="other"))
-
-    for field in fields:
-        try:
-            OtherRecordAdapter.validate_python(field, from_attributes=True)
-        except ValidationError as e:
-            validation_errors.extend(e.errors())
-    if len(validation_errors) > 0:
-        raise ValidationError.from_exception_data(
-            title=fields.__class__.__name__, line_errors=validation_errors
-        )
-    else:
-        return fields

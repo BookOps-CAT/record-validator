@@ -1,15 +1,11 @@
 from typing import Any, List, Tuple, Union
 from pydantic_core import ErrorDetails
-from record_validator.adapters import FieldAdapter
+from record_validator.adapters import get_adapter
 from record_validator.constants import AllFields, AllSubfields
 
 
 def get_examples_from_schema(loc: tuple) -> Union[List[str], None]:
-    field = [
-        i
-        for i in loc
-        if isinstance(i, str) and i not in ["fields", "monograph", "other"]
-    ]
+    field = [i for i in loc if isinstance(i, str) and i != "fields"]
     model = field[0]
     if model not in [i.value for i in AllFields]:
         return None
@@ -24,7 +20,8 @@ def get_examples_from_schema(loc: tuple) -> Union[List[str], None]:
     else:
         model_field = field[2]
         by_alias = False
-    adapter_schema = FieldAdapter.json_schema(by_alias=by_alias)
+    adapter = get_adapter(record_type=None)
+    adapter_schema = adapter.json_schema(by_alias=by_alias)
     return adapter_schema["$defs"][model_name]["properties"][model_field]["examples"]
 
 

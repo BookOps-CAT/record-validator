@@ -4,6 +4,70 @@ from pymarc import Field as MarcField
 
 
 @pytest.fixture
+def stub_call_no():
+    return MarcField(
+        tag="852",
+        indicators=["8", " "],
+        subfields=[Subfield(code="h", value="ReCAP 24-119100")],
+    )
+
+
+@pytest.fixture
+def stub_order():
+    return MarcField(
+        tag="960",
+        indicators=[" ", " "],
+        subfields=[
+            Subfield(code="s", value="200"),
+            Subfield(code="t", value="MAF"),
+            Subfield(code="u", value="123456apprv"),
+        ],
+    )
+
+
+@pytest.fixture
+def stub_auxam_item():
+    return MarcField(
+        tag="949",
+        indicators=[" ", "1"],
+        subfields=[
+            Subfield(code="z", value="8528"),
+            Subfield(code="a", value="ReCAP 23-100000"),
+            Subfield(code="c", value="1"),
+            Subfield(code="h", value="43"),
+            Subfield(code="i", value="33433123456789"),
+            Subfield(code="l", value="rcmf2"),
+            Subfield(code="m", value="bar"),
+            Subfield(code="p", value="1.00"),
+            Subfield(code="t", value="55"),
+            Subfield(code="u", value="foo"),
+            Subfield(code="v", value="AUXAM"),
+        ],
+    )
+
+
+@pytest.fixture
+def stub_evp_item():
+    return MarcField(
+        tag="949",
+        indicators=[" ", "1"],
+        subfields=[
+            Subfield(code="z", value="8528"),
+            Subfield(code="a", value="ReCAP 23-100000"),
+            Subfield(code="c", value="1"),
+            Subfield(code="h", value="43"),
+            Subfield(code="i", value="33433123456789"),
+            Subfield(code="l", value="rcmf2"),
+            Subfield(code="m", value="bar"),
+            Subfield(code="p", value="1.00"),
+            Subfield(code="t", value="55"),
+            Subfield(code="u", value="foo"),
+            Subfield(code="v", value="EVP"),
+        ],
+    )
+
+
+@pytest.fixture
 def stub_record():
     bib = Record()
     bib.leader = "00454cam a22001575i 4500"
@@ -86,7 +150,7 @@ def stub_record():
                 Subfield(code="p", value="1.00"),
                 Subfield(code="t", value="55"),
                 Subfield(code="u", value="foo"),
-                Subfield(code="v", value="AUXAM"),
+                Subfield(code="v", value="EVP"),
             ],
         )
     )
@@ -137,7 +201,7 @@ def stub_record_multiple_items(stub_record):
                 Subfield(code="p", value="1.00"),
                 Subfield(code="t", value="55"),
                 Subfield(code="u", value="foo"),
-                Subfield(code="v", value="AUXAM"),
+                Subfield(code="v", value="EVP"),
             ],
         )
     )
@@ -184,4 +248,49 @@ def stub_multivol_record(stub_record):
     stub_record.remove_fields("949", "852")
     stub_record["300"].delete_subfield("a")
     stub_record["300"].add_subfield("a", "5 volumes")
+    return stub_record
+
+
+@pytest.fixture
+def stub_auxam_monograph(stub_record):
+    stub_record.remove_fields("901")
+    stub_record.add_field(
+        MarcField(
+            tag="901",
+            indicators=[" ", " "],
+            subfields=[Subfield(code="a", value="AUXAM")],
+        )
+    )
+    stub_record["949"].delete_subfield("v")
+    stub_record["949"].add_subfield("v", "AUXAM")
+    return stub_record
+
+
+@pytest.fixture
+def stub_aux_other_record(stub_record):
+    stub_record.remove_fields("901", "949")
+    stub_record.add_field(
+        MarcField(
+            tag="901",
+            indicators=[" ", " "],
+            subfields=[Subfield(code="a", value="AUXAM")],
+        )
+    )
+    stub_record["852"].delete_subfield("h")
+    stub_record["852"].add_subfield("h", "ReCAP 24-")
+    return stub_record
+
+
+@pytest.fixture
+def stub_leila_monograph(stub_record):
+    stub_record.remove_fields("901")
+    stub_record.add_field(
+        MarcField(
+            tag="901",
+            indicators=[" ", " "],
+            subfields=[Subfield(code="a", value="LEILA")],
+        )
+    )
+    stub_record["949"].delete_subfield("v")
+    stub_record["949"].add_subfield("v", "LEILA")
     return stub_record

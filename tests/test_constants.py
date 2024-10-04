@@ -40,6 +40,24 @@ def test_AllFields_control_fields():
     )
 
 
+def test_AllFields_non_repeatable_fields():
+    assert sorted(AllFields.non_repeatable_fields()) == sorted(
+        [
+            "001",
+            "003",
+            "005",
+            "006",
+            "007",
+            "008",
+            "852",
+            "901",
+            "910",
+            "960",
+            "980",
+        ]
+    )
+
+
 @pytest.mark.parametrize(
     "field_name, code",
     [

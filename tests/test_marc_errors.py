@@ -1,6 +1,4 @@
 import pytest
-from pymarc import Subfield
-from pymarc import Field as MarcField
 from pydantic import ValidationError
 from record_validator.marc_errors import (
     get_examples_from_schema,
@@ -222,19 +220,13 @@ def test_get_examples_from_schema(field, examples):
 
 class TestMarcErrorMonograph:
     def test_MarcError_string_pattern(self, stub_record):
-        stub_record.remove_fields("852")
-        stub_record.add_field(
-            MarcField(
-                tag="852",
-                indicators=["8", " "],
-                subfields=[Subfield(code="h", value="ReCAP-24-119100")],
-            )
-        )
+        stub_record["852"].delete_subfield("h")
+        stub_record["852"].add_subfield("h", "ReCAP-24-119100")
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "monograph", "852", "call_no")
+        assert error.loc == ("fields", "852", "call_no")
         assert error.input == "ReCAP-24-119100"
         assert isinstance(error.ctx, dict)
         assert error.type == "string_pattern_mismatch"
@@ -252,7 +244,6 @@ class TestMarcErrorMonograph:
         assert len(e.value.errors()) == 1
         assert error.loc == (
             "fields",
-            "monograph",
             "980",
         )
         assert error.ctx is None
@@ -266,7 +257,7 @@ class TestMarcErrorMonograph:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "monograph", "960", "order_location")
+        assert error.loc == ("fields", "960", "order_location")
         assert error.type == "missing"
         assert error.input == {
             "ind1": " ",
@@ -287,7 +278,7 @@ class TestMarcErrorMonograph:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "monograph", "960", "order_location")
+        assert error.loc == ("fields", "960", "order_location")
         assert error.input == "foo"
         assert isinstance(error.ctx, dict)
         assert error.type == "literal_error"
@@ -298,23 +289,12 @@ class TestMarcErrorMonograph:
         assert error.loc_marc == "960$t"
 
     def test_MarcError_literal_indicator_error(self, stub_record):
-        stub_record.remove_fields("960")
-        stub_record.add_field(
-            MarcField(
-                tag="960",
-                indicators=["7", " "],
-                subfields=[
-                    Subfield(code="s", value="100"),
-                    Subfield(code="t", value="MAF"),
-                    Subfield(code="u", value="123456apprv"),
-                ],
-            )
-        )
+        stub_record["960"].indicator1 = "7"
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "monograph", "960", "ind1")
+        assert error.loc == ("fields", "960", "ind1")
         assert error.input == "7"
         assert isinstance(error.ctx, dict)
         assert error.type == "literal_error"
@@ -322,23 +302,13 @@ class TestMarcErrorMonograph:
         assert error.loc_marc == "960ind1"
 
     def test_MarcError_lcc_indicator_error(self, stub_record):
-        stub_record.remove_fields("050")
-        stub_record.add_field(
-            MarcField(
-                tag="050",
-                indicators=[" ", "0"],
-                subfields=[
-                    Subfield(code="a", value="F00"),
-                ],
-            )
-        )
+        stub_record["050"].indicator2 = "0"
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
         assert error.loc == (
             "fields",
-            "monograph",
             "050",
         )
         assert error.input == [" ", "0"]
@@ -367,7 +337,6 @@ class TestMarcErrorMonograph:
         assert len(string_type_error) == 1
         assert error.loc == (
             "fields",
-            "monograph",
             "003",
             "ind1",
         )
@@ -410,8 +379,8 @@ class TestMarcErrorMonograph:
         assert len(errors) == 2
         assert sorted(error_locs) == sorted(
             [
-                ("fields", "monograph", "960", "subfields", 0, "s"),
-                ("fields", "monograph", "960", "order_price"),
+                ("fields", "960", "subfields", 0, "s"),
+                ("fields", "960", "order_price"),
             ]
         )
         assert all(isinstance(i.input, float) for i in errors)
@@ -429,7 +398,7 @@ class TestMarcErrorOther:
             )
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "other", "960", "order_price")
+        assert error.loc == ("fields", "960", "order_price")
         assert error.input == "1.00"
         assert isinstance(error.ctx, dict)
         assert error.type == "string_pattern_mismatch"
@@ -446,7 +415,6 @@ class TestMarcErrorOther:
         assert len(e.value.errors()) == 1
         assert error.loc == (
             "fields",
-            "other",
             "980",
         )
         assert error.ctx is None
@@ -462,7 +430,7 @@ class TestMarcErrorOther:
             )
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "other", "960", "order_location")
+        assert error.loc == ("fields", "960", "order_location")
         assert error.type == "missing"
         assert error.input == {
             "ind1": " ",
@@ -485,7 +453,7 @@ class TestMarcErrorOther:
             )
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "other", "960", "order_location")
+        assert error.loc == ("fields", "960", "order_location")
         assert error.input == "foo"
         assert isinstance(error.ctx, dict)
         assert error.type == "literal_error"
@@ -496,25 +464,14 @@ class TestMarcErrorOther:
         assert error.loc_marc == "960$t"
 
     def test_MarcError_literal_indicator_error(self, stub_pamphlet_record):
-        stub_pamphlet_record.remove_fields("960")
-        stub_pamphlet_record.add_field(
-            MarcField(
-                tag="960",
-                indicators=["7", " "],
-                subfields=[
-                    Subfield(code="s", value="100"),
-                    Subfield(code="t", value="MAF"),
-                    Subfield(code="u", value="123456apprv"),
-                ],
-            )
-        )
+        stub_pamphlet_record["960"].indicator1 = "7"
         with pytest.raises(ValidationError) as e:
             RecordModel(
                 leader=stub_pamphlet_record.leader, fields=stub_pamphlet_record.fields
             )
         error = MarcError(e.value.errors()[0])
         assert len(e.value.errors()) == 1
-        assert error.loc == ("fields", "other", "960", "ind1")
+        assert error.loc == ("fields", "960", "ind1")
         assert error.input == "7"
         assert isinstance(error.ctx, dict)
         assert error.type == "literal_error"
@@ -522,16 +479,7 @@ class TestMarcErrorOther:
         assert error.loc_marc == "960ind1"
 
     def test_MarcError_lcc_indicator_error(self, stub_pamphlet_record):
-        stub_pamphlet_record.remove_fields("050")
-        stub_pamphlet_record.add_field(
-            MarcField(
-                tag="050",
-                indicators=[" ", "0"],
-                subfields=[
-                    Subfield(code="a", value="F00"),
-                ],
-            )
-        )
+        stub_pamphlet_record["050"].indicator2 = "0"
         with pytest.raises(ValidationError) as e:
             RecordModel(
                 leader=stub_pamphlet_record.leader, fields=stub_pamphlet_record.fields
@@ -540,7 +488,6 @@ class TestMarcErrorOther:
         assert len(e.value.errors()) == 1
         assert error.loc == (
             "fields",
-            "other",
             "050",
         )
         assert error.input == [" ", "0"]
@@ -553,16 +500,8 @@ class TestMarcErrorOther:
         assert error.loc_marc == "050"
 
     def test_MarcError_extra_fields(self, stub_record):
-        stub_record.remove_fields("300")
-        stub_record.add_field(
-            MarcField(
-                tag="300",
-                indicators=[" ", " "],
-                subfields=[
-                    Subfield(code="a", value="5 pages :"),
-                ],
-            )
-        )
+        stub_record["300"].delete_subfield("a")
+        stub_record["300"].add_subfield("a", "5 pages")
         record_dict = stub_record.as_dict()
         with pytest.raises(ValidationError) as e:
             RecordModel(**record_dict)
@@ -570,13 +509,13 @@ class TestMarcErrorOther:
         error_2 = MarcError(e.value.errors()[1])
         assert len(e.value.errors()) == 2
         assert error_1.type == "extra_forbidden"
-        assert error_1.loc == ("fields", "other", "852")
+        assert error_1.loc == ("fields", "852")
         assert error_1.input == "852"
         assert error_1.ctx is None
         assert error_1.msg == "Extra field: 852"
         assert error_1.loc_marc == "852"
         assert error_2.type == "extra_forbidden"
-        assert error_2.loc == ("fields", "other", "949")
+        assert error_2.loc == ("fields", "949")
         assert error_2.input == "949"
         assert error_2.ctx is None
         assert error_2.msg == "Extra field: 949"
@@ -596,8 +535,8 @@ class TestMarcErrorOther:
         assert len(errors) == 2
         assert sorted(error_locs) == sorted(
             [
-                ("fields", "other", "960", "subfields", 0, "s"),
-                ("fields", "other", "960", "order_price"),
+                ("fields", "960", "subfields", 0, "s"),
+                ("fields", "960", "order_price"),
             ]
         )
         assert all(isinstance(i.input, float) for i in errors)
@@ -784,16 +723,8 @@ class TestMarcValidationErrorOther:
         assert len(errors["order_item_mismatches"]) == 0
 
     def test_MarcValidationError_extra_fields(self, stub_record):
-        stub_record.remove_fields("300")
-        stub_record.add_field(
-            MarcField(
-                tag="300",
-                indicators=[" ", " "],
-                subfields=[
-                    Subfield(code="a", value="5 pages :"),
-                ],
-            )
-        )
+        stub_record["300"].delete_subfield("a")
+        stub_record["300"].add_subfield("a", "5 pages :")
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         errors = MarcValidationError(e.value.errors()).to_dict()
@@ -807,17 +738,13 @@ class TestMarcValidationErrorOther:
         assert errors["extra_fields"] == ["852", "949"]
         assert errors["order_item_mismatches"] == []
 
-    def test_MarcValidationError_multiple_errors(self, stub_pamphlet_record):
+    def test_MarcValidationError_multiple_errors(
+        self, stub_pamphlet_record, stub_call_no
+    ):
         stub_pamphlet_record.remove_fields("980")
         stub_pamphlet_record["960"].delete_subfield("t")
         stub_pamphlet_record["960"].add_subfield("t", "FOO")
-        stub_pamphlet_record.add_field(
-            MarcField(
-                tag="852",
-                indicators=["8", " "],
-                subfields=[Subfield(code="h", value="ReCAP 24-119100")],
-            )
-        )
+        stub_pamphlet_record.add_field(stub_call_no)
         with pytest.raises(ValidationError) as e:
             RecordModel(
                 leader=stub_pamphlet_record.leader, fields=stub_pamphlet_record.fields

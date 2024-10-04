@@ -1,165 +1,196 @@
+from typing import get_args
+from pydantic import Tag, TypeAdapter
+from pymarc import Field as MarcField
 import pytest
 from record_validator.adapters import (
-    MonographRecordAdapter,
-    OtherRecordAdapter,
-    FieldAdapter,
+    get_adapter,
+    tag_discriminator,
+    AuxOtherFields,
+    FieldList,
+    MonographFields,
+    OtherFields,
 )
-from record_validator.adapters import (
-    get_material_type,
-    get_monograph_tag,
-    get_other_tag,
+from record_validator.field_models import (
+    AuxBibCallNo,
+    MonographDataField,
+    OtherDataField,
 )
 
 
-def test_get_material_type_monograph(stub_record):
-    assert get_material_type(stub_record.fields) == "monograph"
-
-
-def test_get_material_type_dance(stub_dance_record):
-    assert get_material_type(stub_dance_record.fields) == "other"
-
-
-def test_get_material_type_pamphlet(stub_pamphlet_record):
-    assert get_material_type(stub_pamphlet_record.fields) == "other"
-
-
-def test_get_material_type_catalogue(stub_catalogue_record):
-    assert get_material_type(stub_catalogue_record.fields) == "other"
-
-
-def test_get_material_type_multivol(stub_multivol_record):
-    assert get_material_type(stub_multivol_record.fields) == "other"
-
-
-def test_get_material_type_dict(stub_record):
-    record_dict = stub_record.as_dict()
-    assert get_material_type(record_dict["fields"]) == "monograph"
+@pytest.mark.parametrize(
+    "record_type, additional_fields",
+    [
+        ("auxam_monograph", ["BibCallNo", "MonographDataField", "ItemField"]),
+        ("evp_monograph", ["BibCallNo", "MonographDataField", "ItemField"]),
+        ("leila_monograph", ["BibCallNo", "MonographDataField", "ItemField"]),
+        ("monograph", ["BibCallNo", "MonographDataField", "ItemField"]),
+        ("auxam_other", ["AuxBibCallNo", "OtherDataField"]),
+        ("evp_other", ["OtherDataField"]),
+        ("leila_other", ["OtherDataField"]),
+        ("other", ["OtherDataField"]),
+        (
+            None,
+            [
+                "AuxBibCallNo",
+                "BibCallNo",
+                "ItemField",
+                "MonographDataField",
+                "OtherDataField",
+            ],
+        ),
+    ],
+)
+def test_get_adapter(record_type, additional_fields):
+    adapter = get_adapter(record_type)
+    schema = adapter.json_schema(by_alias=True)
+    base_fields = [
+        "BibVendorCode",
+        "ControlField001",
+        "ControlField003",
+        "ControlField005",
+        "ControlField006",
+        "ControlField007",
+        "ControlField008",
+        "InvoiceField",
+        "LCClass",
+        "LibraryField",
+        "OrderField",
+    ]
+    assert isinstance(adapter, TypeAdapter)
+    assert sorted([i for i in schema["$defs"].keys()]) == sorted(
+        base_fields + additional_fields
+    )
 
 
 @pytest.mark.parametrize(
     "tag, expected",
     [
         ("245", "data_field"),
+        ("300", "data_field"),
         ("960", "960"),
         ("949", "949"),
-        ("300", "data_field"),
+        ("852", "852"),
         ("008", "008"),
         ("001", "001"),
     ],
 )
-def test_get_monograph_tag_from_dict(tag, expected):
+def test_tag_discriminator_from_dict(tag, expected):
     field = {tag: {"ind1": " ", "ind2": " ", "subfields": [{"a": "foo"}]}}
-    assert get_monograph_tag(field) == expected
+    assert tag_discriminator(field) == expected
 
 
 @pytest.mark.parametrize(
     "tag, expected",
     [
         ("245", "data_field"),
+        ("300", "data_field"),
         ("960", "960"),
         ("949", "949"),
-        ("300", "data_field"),
+        ("852", "852"),
         ("008", "008"),
         ("001", "001"),
     ],
 )
-def test_get_monograph_tag_from_marc(stub_record, tag, expected):
-    field = stub_record.get(tag, tag)
-    assert get_monograph_tag(field) == expected
+def test_tag_discriminator_from_marc(stub_record, tag, expected):
+    field = stub_record.get(tag)
+    assert isinstance(field, MarcField)
+    assert field.tag == tag
+    assert tag_discriminator(field) == expected
 
 
-@pytest.mark.parametrize(
-    "tag, expected",
-    [
-        ("245", "data_field"),
-        ("960", "960"),
-        ("949", "data_field"),
-        ("852", "data_field"),
-        ("008", "008"),
-        ("001", "001"),
-    ],
-)
-def test_get_other_tag_from_dict(tag, expected):
-    field = {tag: {"ind1": " ", "ind2": " ", "subfields": [{"a": "foo"}]}}
-    assert get_other_tag(field) == expected
-
-
-@pytest.mark.parametrize(
-    "tag, expected",
-    [
-        ("245", "data_field"),
-        ("960", "960"),
-        ("949", "data_field"),
-        ("300", "data_field"),
-        ("008", "008"),
-        ("001", "001"),
-    ],
-)
-def test_get_other_tag_from_marc(stub_record, tag, expected):
-    field = stub_record.get(tag, tag)
-    assert get_other_tag(field) == expected
-
-
-def test_FieldAdapter():
-    schema = FieldAdapter.json_schema(by_alias=True)
-    assert sorted([i for i in schema["$defs"].keys()]) == sorted(
-        [
-            "BibCallNo",
-            "BibVendorCode",
-            "ControlField001",
-            "ControlField003",
-            "ControlField005",
-            "ControlField006",
-            "ControlField007",
-            "ControlField008",
-            "InvoiceField",
-            "ItemField",
-            "LCClass",
-            "LibraryField",
-            "MonographOtherField",
-            "OrderField",
-            "OtherDataField",
+def test_AuxOtherFields():
+    aux_other_field_names = [get_args(i)[0] for i in AuxOtherFields]
+    aux_other_tags = [get_args(i)[1] for i in AuxOtherFields]
+    assert isinstance(AuxOtherFields, tuple)
+    assert len(aux_other_field_names) == 14
+    assert AuxBibCallNo in aux_other_field_names
+    assert OtherDataField in aux_other_field_names
+    assert MonographDataField not in aux_other_field_names
+    assert len(aux_other_tags) == 14
+    assert aux_other_tags == [
+        Tag(i)
+        for i in [
+            "001",
+            "003",
+            "005",
+            "006",
+            "007",
+            "008",
+            "050",
+            "852",
+            "901",
+            "910",
+            "949",
+            "960",
+            "980",
+            "data_field",
         ]
-    )
+    ]
 
 
-def test_MonographRecordAdapter():
-    schema = MonographRecordAdapter.json_schema(by_alias=True)
-    assert sorted([i for i in schema["$defs"].keys()]) == sorted(
-        [
-            "BibCallNo",
-            "BibVendorCode",
-            "ControlField001",
-            "ControlField003",
-            "ControlField005",
-            "ControlField006",
-            "ControlField007",
-            "ControlField008",
-            "InvoiceField",
-            "ItemField",
-            "LCClass",
-            "LibraryField",
-            "MonographOtherField",
-            "OrderField",
+def test_FieldList():
+    assert isinstance(FieldList, tuple)
+    assert len(FieldList) == 16
+    assert AuxBibCallNo in FieldList
+    assert OtherDataField in FieldList
+    assert MonographDataField in FieldList
+
+
+def test_MonographFields():
+    mono_field_names = [get_args(i)[0] for i in MonographFields]
+    mono_tags = [get_args(i)[1] for i in MonographFields]
+    assert isinstance(MonographFields, tuple)
+    assert len(mono_field_names) == 14
+    assert AuxBibCallNo not in mono_field_names
+    assert OtherDataField not in mono_field_names
+    assert MonographDataField in mono_field_names
+    assert len(mono_tags) == 14
+    assert mono_tags == [
+        Tag(i)
+        for i in [
+            "001",
+            "003",
+            "005",
+            "006",
+            "007",
+            "008",
+            "050",
+            "852",
+            "901",
+            "910",
+            "949",
+            "960",
+            "980",
+            "data_field",
         ]
-    )
+    ]
 
 
-def test_OtherRecordAdapter():
-    schema = OtherRecordAdapter.json_schema(by_alias=True)
-    assert sorted([i for i in schema["$defs"].keys()]) == sorted(
-        [
-            "BibVendorCode",
-            "ControlField001",
-            "ControlField003",
-            "ControlField005",
-            "ControlField006",
-            "ControlField007",
-            "ControlField008",
-            "InvoiceField",
-            "LCClass",
-            "LibraryField",
-            "OrderField",
-            "OtherDataField",
+def test_OtherFields():
+    other_field_names = [get_args(i)[0] for i in OtherFields]
+    other_tags = [get_args(i)[1] for i in OtherFields]
+    assert isinstance(OtherFields, tuple)
+    assert len(other_field_names) == 14
+    assert AuxBibCallNo not in other_field_names
+    assert OtherDataField in other_field_names
+    assert MonographDataField not in other_field_names
+    assert len(other_tags) == 14
+    assert other_tags == [
+        Tag(i)
+        for i in [
+            "001",
+            "003",
+            "005",
+            "006",
+            "007",
+            "008",
+            "050",
+            "852",
+            "901",
+            "910",
+            "949",
+            "960",
+            "980",
+            "data_field",
         ]
-    )
+    ]
