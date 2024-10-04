@@ -12,6 +12,8 @@ class AuxBibCallNo(BaseDataField):
         str,
         Field(
             pattern=r"^ReCAP 23-$|^ReCAP 24-$|^ReCAP 25-$",
+            min_length=9,
+            max_length=9,
             exclude=True,
             examples=["ReCAP 23-", "ReCAP 24-", "ReCAP 25-"],
         ),
@@ -27,6 +29,8 @@ class BibCallNo(BaseDataField):
         str,
         Field(
             pattern=r"^ReCAP 23-\d{6}$|^ReCAP 24-\d{6}$|^ReCAP 25-\d{6}$",
+            min_length=15,
+            max_length=15,
             exclude=True,
             examples=["ReCAP 23-000001", "ReCAP 24-100001", "ReCAP 25-222000"],
         ),
@@ -64,7 +68,12 @@ class ControlField005(BaseControlField):
     tag: Annotated[Literal["005"], Field(alias="005")]
     value: Annotated[
         str,
-        Field(pattern=r"^\d{14}\.\d$", examples=["20240101125000.0"]),
+        Field(
+            pattern=r"^\d{14}\.\d$",
+            min_length=16,
+            max_length=16,
+            examples=["20240101125000.0"],
+        ),
     ]
 
 
@@ -72,7 +81,12 @@ class ControlField006(BaseControlField):
     tag: Annotated[Literal["006"], Field(alias="006")]
     value: Annotated[
         str,
-        Field(pattern=r"^[A-z0-9|\\ ]{1,18}$", examples=["b|||||||||||||||||"]),
+        Field(
+            pattern=r"^[A-z0-9|\\ ]{1,18}$",
+            min_length=7,
+            max_length=18,
+            examples=["b|||||||||||||||||"],
+        ),
     ]
 
 
@@ -80,7 +94,12 @@ class ControlField007(BaseControlField):
     tag: Annotated[Literal["007"], Field(alias="007")]
     value: Annotated[
         str,
-        Field(pattern=r"^[A-z0-9|\\ ]{2,23}$", examples=["cr |||||||||||"]),
+        Field(
+            pattern=r"^[A-z0-9|\\ ]{2,23}$",
+            min_length=2,
+            max_length=23,
+            examples=["cr |||||||||||"],
+        ),
     ]
 
 
@@ -90,6 +109,8 @@ class ControlField008(BaseControlField):
         str,
         Field(
             pattern=r"^[a-z0-9|\\ ]{40}$",
+            min_length=40,
+            max_length=40,
             examples=["210505s2021    nyu           000 0 eng d"],
         ),
     ]
@@ -104,6 +125,8 @@ class InvoiceField(BaseDataField):
         str,
         Field(
             pattern=r"^\d{6}$",
+            min_length=6,
+            max_length=6,
             examples=["240101", "230202"],
             exclude=True,
         ),
@@ -162,6 +185,8 @@ class ItemField(BaseDataField):
         str,
         Field(
             pattern=r"^ReCAP 23-\d{6}$|^ReCAP 24-\d{6}$|^ReCAP 25-\d{6}$",
+            min_length=15,
+            max_length=15,
             examples=["ReCAP 23-000001", "ReCAP 24-100001", "ReCAP 25-222000"],
             exclude=True,
         ),
@@ -177,6 +202,8 @@ class ItemField(BaseDataField):
         str,
         Field(
             pattern=r"^33433[0-9]{9}$",
+            min_length=14,
+            max_length=14,
             examples=["33433123456789", "33433111111111"],
             exclude=True,
         ),
@@ -255,6 +282,8 @@ class MonographDataField(BaseDataField):
         str,
         Field(
             pattern=r"0[1-9]{2}|0[1-46-9]0|^[1-7]\d\d|8[0-46-9]\d|85[013-9]|90[02-9]|9[168][1-9]|94[0-8]|9[23579]\d",  # noqa: E501
+            min_length=3,
+            max_length=3,
             examples=["100", "710", "650", "245"],
         ),
     ]
@@ -293,6 +322,8 @@ class OtherDataField(BaseDataField):
         str,
         Field(
             pattern=r"0[1-9]{2}|0[1-46-9]0|^[1-8]\d\d|90[02-9]|9[168][1-9]|9[2-579]\d",  # noqa: E501
+            min_length=3,
+            max_length=3,
             examples=["100", "710", "650", "245"],
         ),
     ]

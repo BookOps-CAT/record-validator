@@ -113,7 +113,7 @@ class TestRecordModelMonograph:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         assert len(e.value.errors()) == 2
         assert sorted([i["type"] for i in e.value.errors()]) == sorted(
-            ["missing", "string_pattern_mismatch"]
+            ["missing", "string_too_short"]
         )
 
     def test_RecordModel_invalid(self):
@@ -177,7 +177,7 @@ class TestRecordModelMonograph:
             RecordModel(**record_dict)
         assert len(e.value.errors()) == 3
         assert sorted([i["type"] for i in e.value.errors()]) == sorted(
-            ["literal_error", "string_pattern_mismatch", "missing"]
+            ["literal_error", "string_too_short", "missing"]
         )
 
     def test_RecordModel_missing_field(self, stub_record):
@@ -187,9 +187,25 @@ class TestRecordModelMonograph:
         assert len(e.value.errors()) == 1
         assert [i["type"] for i in e.value.errors()] == ["missing"]
 
-    def test_RecordModel_string_pattern_mismatch(self, stub_record):
+    def test_RecordModel_string_too_short(self, stub_record):
         stub_record["852"].delete_subfield("h")
         stub_record["852"].add_subfield("h", "foo")
+        with pytest.raises(ValidationError) as e:
+            RecordModel(leader=stub_record.leader, fields=stub_record.fields)
+        assert len(e.value.errors()) == 1
+        assert [i["type"] for i in e.value.errors()] == ["string_too_short"]
+
+    def test_RecordModel_string_too_long(self, stub_record):
+        stub_record["852"].delete_subfield("h")
+        stub_record["852"].add_subfield("h", "ReCAP 11-1111111111")
+        with pytest.raises(ValidationError) as e:
+            RecordModel(leader=stub_record.leader, fields=stub_record.fields)
+        assert len(e.value.errors()) == 1
+        assert [i["type"] for i in e.value.errors()] == ["string_too_long"]
+
+    def test_RecordModel_string_pattern_mismatch(self, stub_record):
+        stub_record["852"].delete_subfield("h")
+        stub_record["852"].add_subfield("h", "ReCAP 11-111111")
         with pytest.raises(ValidationError) as e:
             RecordModel(leader=stub_record.leader, fields=stub_record.fields)
         assert len(e.value.errors()) == 1
