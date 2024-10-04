@@ -103,13 +103,19 @@ def test_AuxBibCallNo_invalid_indicators(ind1_value, ind2_value):
 
 
 @pytest.mark.parametrize(
-    "field_value",
-    ["foo", "bar", "ReCAP 11-111111", "ReCAP 24-111111"],
+    "field_value, error_type",
+    [
+        ("foo", "string_too_short"),
+        ("bar", "string_too_short"),
+        ("ReCAP 11-", "string_pattern_mismatch"),
+        ("ReCAP 24-111111", "string_too_long"),
+        ("ReCAP 23-111111", "string_too_long"),
+    ],
 )
-def test_AuxBibCallNo_invalid_call_no_pattern(field_value):
+def test_AuxBibCallNo_invalid_call_no(field_value, error_type):
     with pytest.raises(ValidationError) as e:
         AuxBibCallNo(tag="852", ind1="8", ind2=" ", subfields=[{"h": field_value}])
-    assert e.value.errors()[0]["type"] == "string_pattern_mismatch"
+    assert e.value.errors()[0]["type"] == error_type
     assert len(e.value.errors()) == 1
 
 
@@ -214,13 +220,19 @@ def test_BibCallNo_invalid_indicators(ind1_value, ind2_value):
 
 
 @pytest.mark.parametrize(
-    "field_value",
-    ["foo", "bar", "ReCAP 11-111111"],
+    "field_value, error_type",
+    [
+        ("foo", "string_too_short"),
+        ("bar", "string_too_short"),
+        ("ReCAP 23-", "string_too_short"),
+        ("ReCAP 11-111111", "string_pattern_mismatch"),
+        ("ReCAP 23-1111111111", "string_too_long"),
+    ],
 )
-def test_BibCallNo_invalid_call_no_pattern(field_value):
+def test_BibCallNo_invalid_call_no_pattern(field_value, error_type):
     with pytest.raises(ValidationError) as e:
         BibCallNo(tag="852", ind1="8", ind2=" ", subfields=[{"h": field_value}])
-    assert e.value.errors()[0]["type"] == "string_pattern_mismatch"
+    assert e.value.errors()[0]["type"] == error_type
     assert len(e.value.errors()) == 1
 
 
@@ -408,18 +420,21 @@ def test_ControlField005_valid_from_field():
 
 
 @pytest.mark.parametrize(
-    "field_value",
+    "field_value, error_type",
     [
-        1,
-        1.0,
-        None,
-        [],
+        (1, "string_type"),
+        (1.0, "string_type"),
+        (None, "string_type"),
+        ([], "string_type"),
+        ("20240101125ooo.0", "string_pattern_mismatch"),
+        ("20240101", "string_too_short"),
+        ("20240101125000.00", "string_too_long"),
     ],
 )
-def test_ControlField005_invalid_code_value(field_value):
+def test_ControlField005_invalid_code_value(field_value, error_type):
     with pytest.raises(ValidationError) as e:
         ControlField005(tag="005", value=field_value)
-    assert e.value.errors()[0]["type"] == "string_type"
+    assert e.value.errors()[0]["type"] == error_type
     assert e.value.errors()[0]["loc"] == ("value",)
     assert len(e.value.errors()) == 1
 
@@ -436,18 +451,22 @@ def test_ControlField006_valid_from_field():
 
 
 @pytest.mark.parametrize(
-    "field_value",
+    "field_value, error_type",
     [
-        1,
-        1.0,
-        None,
-        [],
+        (1, "string_type"),
+        (1.0, "string_type"),
+        (None, "string_type"),
+        ([], "string_type"),
+        ("2024", "string_too_short"),
+        ("b|", "string_too_short"),
+        ("b||||||||||||||||!", "string_pattern_mismatch"),
+        ("b||||||||||||||||||||", "string_too_long"),
     ],
 )
-def test_ControlField006_invalid_code_value(field_value):
+def test_ControlField006_invalid_code_value(field_value, error_type):
     with pytest.raises(ValidationError) as e:
         ControlField006(tag="006", value=field_value)
-    assert e.value.errors()[0]["type"] == "string_type"
+    assert e.value.errors()[0]["type"] == error_type
     assert e.value.errors()[0]["loc"] == ("value",)
     assert len(e.value.errors()) == 1
 
@@ -464,18 +483,21 @@ def test_ControlField007_valid_from_field():
 
 
 @pytest.mark.parametrize(
-    "field_value",
+    "field_value, error_type",
     [
-        1,
-        1.0,
-        None,
-        [],
+        (1, "string_type"),
+        (1.0, "string_type"),
+        (None, "string_type"),
+        ([], "string_type"),
+        ("b", "string_too_short"),
+        ("b||||||||||||||||!", "string_pattern_mismatch"),
+        ("b|||||||||||||||||||||||||", "string_too_long"),
     ],
 )
-def test_ControlField007_invalid_code_value(field_value):
+def test_ControlField007_invalid_code_value(field_value, error_type):
     with pytest.raises(ValidationError) as e:
         ControlField007(tag="007", value=field_value)
-    assert e.value.errors()[0]["type"] == "string_type"
+    assert e.value.errors()[0]["type"] == error_type
     assert e.value.errors()[0]["loc"] == ("value",)
     assert len(e.value.errors()) == 1
 
@@ -496,18 +518,21 @@ def test_ControlField008_valid_from_field():
 
 
 @pytest.mark.parametrize(
-    "field_value",
+    "field_value, error_type",
     [
-        1,
-        1.0,
-        None,
-        [],
+        (1, "string_type"),
+        (1.0, "string_type"),
+        (None, "string_type"),
+        ([], "string_type"),
+        ("210505s2021    nyu", "string_too_short"),
+        ("210505s2021    nyu           000 0 eng !", "string_pattern_mismatch"),
+        ("20210505s2021    nyu           000 0 eng d", "string_too_long"),
     ],
 )
-def test_ControlField008_invalid_code_value(field_value):
+def test_ControlField008_invalid_code_value(field_value, error_type):
     with pytest.raises(ValidationError) as e:
         ControlField008(tag="008", value=field_value)
-    assert e.value.errors()[0]["type"] == "string_type"
+    assert e.value.errors()[0]["type"] == error_type
     assert e.value.errors()[0]["loc"] == ("value",)
     assert len(e.value.errors()) == 1
 
@@ -517,7 +542,7 @@ def test_ControlField008_invalid_code_literal():
         ControlField008(tag="020", value="foo")
     assert [i["type"] for i in e.value.errors()] == [
         "literal_error",
-        "string_pattern_mismatch",
+        "string_too_short",
     ]
     assert len(e.value.errors()) == 2
 
@@ -598,10 +623,16 @@ def test_InvoiceField_invalid_indicators(ind1_value, ind2_value):
 
 
 @pytest.mark.parametrize(
-    "field_value",
-    ["2024-01-01", "2024-01-01T00:00:00", "Jan 1, 2024", "01/01/2024", "01-01-2024"],
+    "field_value, error_type",
+    [
+        ("2024-01-01", "string_too_long"),
+        ("2024-01-01T00:00:00", "string_too_long"),
+        ("2024-01-01T00:00:00.000000", "string_too_long"),
+        ("2024", "string_too_short"),
+        ("JAN124", "string_pattern_mismatch"),
+    ],
 )
-def test_InvoiceField_invalid_invoice_date_value(field_value):
+def test_InvoiceField_invalid_invoice_date_value(field_value, error_type):
     with pytest.raises(ValidationError) as e:
         InvoiceField(
             tag="980",
@@ -617,7 +648,7 @@ def test_InvoiceField_invalid_invoice_date_value(field_value):
                 {"g": "1"},
             ],
         )
-    assert e.value.errors()[0]["type"] == "string_pattern_mismatch"
+    assert e.value.errors()[0]["type"] == error_type
     assert len(e.value.errors()) == 1
 
 
@@ -1034,10 +1065,15 @@ def test_ItemField_invalid_call_tag_type(call_tag_value):
 
 
 @pytest.mark.parametrize(
-    "call_no_value",
-    ["ReCAP 23-", "ReCAP", "ReCAP 00-000000", "ReCAP 24-0"],
+    "call_no_value, error_type",
+    [
+        ("ReCAP 23-", "string_too_short"),
+        ("ReCAP", "string_too_short"),
+        ("ReCAP 00-000000", "string_pattern_mismatch"),
+        ("ReCAP 24-0000000000", "string_too_long"),
+    ],
 )
-def test_ItemField_invalid_call_no_value(call_no_value):
+def test_ItemField_invalid_call_no_value(call_no_value, error_type):
     with pytest.raises(ValidationError) as e:
         ItemField(
             tag="949",
@@ -1055,7 +1091,37 @@ def test_ItemField_invalid_call_no_value(call_no_value):
                 {"t": "2"},
             ],
         )
-    assert e.value.errors()[0]["type"] == "string_pattern_mismatch"
+    assert e.value.errors()[0]["type"] == error_type
+    assert len(e.value.errors()) == 1
+
+
+@pytest.mark.parametrize(
+    "barcode_value, error_type",
+    [
+        ("33433", "string_too_short"),
+        ("33333123456789", "string_pattern_mismatch"),
+        ("334331234567890", "string_too_long"),
+    ],
+)
+def test_ItemField_invalid_barcode_value(barcode_value, error_type):
+    with pytest.raises(ValidationError) as e:
+        ItemField(
+            tag="949",
+            ind1=" ",
+            ind2="1",
+            item_call_tag="8528",
+            subfields=[
+                {"z": "8528"},
+                {"a": "ReCAP 24-000000"},
+                {"i": barcode_value},
+                {"p": "1.00"},
+                {"v": "EVP"},
+                {"h": "43"},
+                {"l": "rcmb2"},
+                {"t": "2"},
+            ],
+        )
+    assert e.value.errors()[0]["type"] == error_type
     assert len(e.value.errors()) == 1
 
 
@@ -1478,12 +1544,24 @@ def test_MonographDataField_valid_tag_literal(tag):
         "980",
     ],
 )
-def test_MonographDataField_invalid_tag_literal(tag):
+def test_MonographDataField_invalid_tag_pattern(tag):
     with pytest.raises(ValidationError) as e:
         MonographDataField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
     error_types = [error["type"] for error in e.value.errors()]
     assert len(e.value.errors()) == 1
     assert error_types == ["string_pattern_mismatch"]
+
+
+@pytest.mark.parametrize(
+    "tag, error_type",
+    [("01", "string_too_short"), ("10000", "string_too_long")],
+)
+def test_MonographDataField_invalid_tag_length(tag, error_type):
+    with pytest.raises(ValidationError) as e:
+        MonographDataField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
+    error_types = [error["type"] for error in e.value.errors()]
+    assert len(e.value.errors()) == 1
+    assert error_types == [error_type]
 
 
 def test_OrderField_valid():
@@ -1642,9 +1720,21 @@ def test_OtherDataField_valid_tag_literal(tag):
         "980",
     ],
 )
-def test_OtherDataField_invalid_tag_literal(tag):
+def test_OtherDataField_invalid_tag_pattern(tag):
     with pytest.raises(ValidationError) as e:
         OtherDataField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
     error_types = [error["type"] for error in e.value.errors()]
     assert len(e.value.errors()) == 1
     assert error_types == ["string_pattern_mismatch"]
+
+
+@pytest.mark.parametrize(
+    "tag, error_type",
+    [("01", "string_too_short"), ("10000", "string_too_long")],
+)
+def test_OtherDataField_invalid_tag_length(tag, error_type):
+    with pytest.raises(ValidationError) as e:
+        MonographDataField(tag=tag, ind1=" ", ind2=" ", subfields=[{"a": "foo"}])
+    error_types = [error["type"] for error in e.value.errors()]
+    assert len(e.value.errors()) == 1
+    assert error_types == [error_type]
