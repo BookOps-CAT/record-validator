@@ -985,6 +985,25 @@ def test_ItemField_valid_item_type(item_type_value):
     assert model_dump["949"]["subfields"][5]["t"] == item_type_value
 
 
+def test_ItemField_valid_no_item_agency():
+    model = ItemField(
+        tag="949",
+        ind1=" ",
+        ind2="1",
+        subfields=[
+            {"a": "ReCAP 23-000000"},
+            {"i": "33433123456789"},
+            {"l": "rc2ma"},
+            {"p": "1.00"},
+            {"t": "55"},
+            {"v": "EVP"},
+            {"z": "8528"},
+        ],
+    )
+    model_dump = model.model_dump(by_alias=True)
+    assert list(model_dump.keys()) == ["949"]
+
+
 @pytest.mark.parametrize(
     "ind1_value, ind2_value",
     [("1", " "), ("2", "0"), ("0", "5")],
@@ -1257,6 +1276,34 @@ def test_ItemField_invalid_item_location_type(item_location_value):
     assert sorted(error_types) == sorted(["literal_error", "string_type"])
     assert error_locs == [("subfields", 3, "l"), ("item_location",)]
     assert len(e.value.errors()) == 2
+
+
+@pytest.mark.parametrize(
+    "item_location_value",
+    ["rcmb2", "rcmf2", "rcmg2"],
+)
+def test_ItemField_invalid_item_location_with_agency(item_location_value):
+    with pytest.raises(ValidationError) as e:
+        ItemField(
+            tag="949",
+            ind1=" ",
+            ind2="1",
+            subfields=[
+                {"z": "8528"},
+                {"a": "ReCAP 23-000000"},
+                {"i": "33433123456789"},
+                {"p": "1.00"},
+                {"v": "EVP"},
+                {"l": item_location_value},
+                {"t": "2"},
+            ],
+        )
+    assert len(e.value.errors()) == 1
+    assert e.value.errors()[0]["type"] == "value_error"
+    assert (
+        e.value.errors()[0]["msg"]
+        == f"Value error, Invalid Item Agency. Item Agency is required for {item_location_value}"
+    )
 
 
 @pytest.mark.parametrize(

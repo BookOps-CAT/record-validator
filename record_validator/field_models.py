@@ -194,10 +194,12 @@ class ItemField(BaseDataField):
     item_volume: Optional[
         Annotated[str, Field(exclude=True, examples=["v. 1", "v. 10"])]
     ] = None
-    item_agency: Annotated[
-        Literal["43"],
-        Field(exclude=True, examples=["43"]),
-    ]
+    item_agency: Optional[
+        Annotated[
+            Literal["43"],
+            Field(exclude=True, examples=["43"]),
+        ]
+    ] = None
     item_barcode: Annotated[
         str,
         Field(
@@ -246,6 +248,14 @@ class ItemField(BaseDataField):
         Literal["8528"],
         Field(exclude=True, examples=["8528"]),
     ]
+
+    @model_validator(mode="after")
+    def validate_item_agency(self) -> "ItemField":
+        error_msg = "Invalid Item Agency. Item Agency is required for"
+        if self.item_agency is None and self.item_location != "rc2ma":
+            raise ValueError(f"{error_msg} {self.item_location}")
+        else:
+            return self
 
 
 class LCClass(BaseDataField):
