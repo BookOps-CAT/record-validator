@@ -271,6 +271,19 @@ class TestMarcErrorMonograph:
         assert error.msg == "Field required"
         assert error.loc_marc == "960$t"
 
+    def test_MarcError_item_agency(self, stub_record):
+        stub_record["949"].delete_subfield("h")
+        with pytest.raises(ValidationError) as e:
+            RecordModel(leader=stub_record.leader, fields=stub_record.fields)
+        error = MarcError(e.value.errors()[0])
+        assert len(e.value.errors()) == 1
+        assert error.loc == ("fields", "949", "item_agency")
+        assert error.input is None
+        assert isinstance(error.ctx, dict)
+        assert error.type == "value_error"
+        assert error.msg == "Invalid Item Agency. Item Agency is required for rcmf2"
+        assert error.loc_marc == "949$h"
+
     def test_MarcError_literal(self, stub_record):
         stub_record["960"].delete_subfield("t")
         stub_record["960"].add_subfield("t", "foo")
@@ -358,7 +371,9 @@ class TestMarcErrorMonograph:
             "item_location",
             "item_type",
         )
-        assert sorted(error.input) == sorted(("MAB", "rcmf2", "55"))
+        assert sorted(error.input) == sorted(
+            {"order_location": "MAB", "item_location": "rcmf2", "item_type": "55"}
+        )
         assert error.ctx is None
         assert error.type == "order_item_mismatch"
         assert (
@@ -652,7 +667,9 @@ class TestMarcValidationErrorMonograph:
             }
         ]
         assert errors["extra_fields"] == []
-        assert errors["order_item_mismatches"] == [("55", "rcmf2", "PAH")]
+        assert errors["order_item_mismatches"] == [
+            {"order_location": "PAH", "item_location": "rcmf2", "item_type": "55"}
+        ]
 
 
 class TestMarcValidationErrorOther:

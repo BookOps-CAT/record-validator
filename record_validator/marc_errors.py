@@ -39,16 +39,12 @@ class MarcError:
 
     def _get_input(self):
         input = self.original_error.get("input")
-        if self.type == "order_item_mismatch":
-            return (
-                input["item_type"],
-                input["item_location"],
-                input["order_location"],
-            )
-        elif self.type == "value_error":
+        if "Invalid indicators" in self.original_error["msg"]:
             ind1 = input.indicator1 if hasattr(input, "indicator1") else input["ind1"]
             ind2 = input.indicator2 if hasattr(input, "indicator2") else input["ind2"]
             return [ind1, ind2]
+        elif "Invalid Item Agency" in self.original_error["msg"]:
+            return None
         else:
             return input
 
@@ -59,13 +55,18 @@ class MarcError:
                 "item_location",
                 "item_type",
             )
-        if (
+        elif (
             self.type == "missing" and "Field required:" in self.original_error["msg"]
         ) or (
             self.type == "extra_forbidden"
             and "Extra field:" in self.original_error["msg"]
         ):
             return tuple([i for i in self.original_error["loc"]] + [self.input])
+        elif (
+            self.type == "value_error"
+            and "Invalid Item Agency" in self.original_error["msg"]
+        ):
+            return tuple([i for i in self.original_error["loc"]] + ["item_agency"])
         else:
             return self.original_error["loc"]
 
@@ -100,7 +101,7 @@ class MarcError:
                 out_loc.append(f"${AllSubfields[str(i)].value}")
             elif len(i) == 1 and not i.isdigit():
                 out_loc.append(f"${i}")
-            elif i == "fields" or i == "value" or i == "other" or i == "monograph":
+            elif i == "fields" or i == "value":
                 pass
             else:
                 out_loc.append(i)
