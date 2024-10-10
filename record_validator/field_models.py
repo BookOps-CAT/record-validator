@@ -1,9 +1,22 @@
+"""This module contains classes that define MARC fields provided in vendor records"""
+
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 from pydantic import Field, model_validator
 from record_validator.base_fields import BaseDataField, BaseControlField
 
 
 class AuxBibCallNo(BaseDataField):
+    """
+    A 852 field in a MARC record for an Amalivre non-monograph record.
+
+    Args:
+        tag: The MARC tag for the field. Must be "852".
+        ind1: The first indicator for the field. Must be "8".
+        ind2: The second indicator for the field. Must be " " or "".
+        subfields: A list of dictionaries containing subfield tags and values.
+        call_no: The call number for the item from subfield h.
+    """
+
     tag: Annotated[Literal["852"], Field(alias="852")]
     ind1: Literal["8"]
     ind2: Literal[" ", ""]
@@ -21,6 +34,17 @@ class AuxBibCallNo(BaseDataField):
 
 
 class BibCallNo(BaseDataField):
+    """
+    A 852 field in a MARC record for a monograph record.
+
+    Args:
+        tag: The MARC tag for the field. Must be "852".
+        ind1: The first indicator for the field. Must be "8".
+        ind2: The second indicator for the field. Must be " " or "".
+        subfields: A list of dictionaries containing subfield tags and values.
+        call_no: The call number for the item from subfield h.
+    """
+
     tag: Annotated[Literal["852"], Field(alias="852")]
     ind1: Literal["8"]
     ind2: Literal[" ", ""]
@@ -38,6 +62,17 @@ class BibCallNo(BaseDataField):
 
 
 class BibVendorCode(BaseDataField):
+    """
+    A 901 field in a MARC record
+
+    Args:
+        tag: The MARC tag for the field. Must be "852".
+        ind1: The first indicator for the field. Must be "8".
+        ind2: The second indicator for the field. Must be " " or "".
+        subfields: A list of dictionaries containing subfield tags and values.
+        vendor_code: The 3-5 digit code corresponding to the vendor.
+    """
+
     tag: Annotated[Literal["901"], Field(alias="901")]
     ind1: Literal[" ", ""]
     ind2: Literal[" ", ""]
@@ -49,6 +84,15 @@ class BibVendorCode(BaseDataField):
 
 
 class ControlField001(BaseControlField):
+    """
+    A 001 control field in a MARC record
+
+    Args:
+        tag: The MARC tag for the field. Must be "001".
+        value: The value of the field. Must be a string.
+
+    """
+
     tag: Annotated[Literal["001"], Field(alias="001")]
     value: Annotated[
         str,
@@ -57,6 +101,14 @@ class ControlField001(BaseControlField):
 
 
 class ControlField003(BaseControlField):
+    """
+    A 003 control field in a MARC record
+
+    Args:
+        tag: The MARC tag for the field. Must be "003".
+        value: The value of the field. Must be a string.
+    """
+
     tag: Annotated[Literal["003"], Field(alias="003")]
     value: Annotated[
         str,
@@ -65,6 +117,14 @@ class ControlField003(BaseControlField):
 
 
 class ControlField005(BaseControlField):
+    """
+    A 005 control field in a MARC record
+
+    Args:
+        tag: The MARC tag for the field. Must be "005".
+        value: The value of the field. Must be a string.
+    """
+
     tag: Annotated[Literal["005"], Field(alias="005")]
     value: Annotated[
         str,
@@ -78,6 +138,14 @@ class ControlField005(BaseControlField):
 
 
 class ControlField006(BaseControlField):
+    """
+    A 006 control field in a MARC record
+
+    Args:
+        tag: The MARC tag for the field. Must be "006".
+        value: The value of the field. Must be a string.
+    """
+
     tag: Annotated[Literal["006"], Field(alias="006")]
     value: Annotated[
         str,
@@ -91,6 +159,14 @@ class ControlField006(BaseControlField):
 
 
 class ControlField007(BaseControlField):
+    """
+    A 007 control field in a MARC record
+
+    Args:
+        tag: The MARC tag for the field. Must be "007".
+        value: The value of the field. Must be a string.
+    """
+
     tag: Annotated[Literal["007"], Field(alias="007")]
     value: Annotated[
         str,
@@ -104,6 +180,14 @@ class ControlField007(BaseControlField):
 
 
 class ControlField008(BaseControlField):
+    """
+    An 008 control field in a MARC record
+
+    Args:
+        tag: The MARC tag for the field. Must be "008".
+        value: The value of the field. Must be a string.
+    """
+
     tag: Annotated[Literal["008"], Field(alias="008")]
     value: Annotated[
         str,
@@ -117,6 +201,23 @@ class ControlField008(BaseControlField):
 
 
 class InvoiceField(BaseDataField):
+    """
+    A 980 field in a MARC record
+
+    Args:
+        tag: The MARC tag for the field. Must be "980".
+        ind1: The first indicator for the field. Must be " ".
+        ind2: The second indicator for the field. Must be " ".
+        subfields: A list of dictionaries containing subfield tags and values.
+        invoice_date: The date of the invoice in the format "YYMMDD" from subfield a.
+        invoice_price: The total price of the invoice from subfield b.
+        invoice_shipping: The shipping cost of the invoice from subfield c.
+        invoice_tax: The tax cost of the invoice from subfield d.
+        invoice_net_price: The net price of the invoice from subfield e.
+        invoice_number: The invoice number from subfield f.
+        invoice_copies: The number of copies from subfield g.
+    """
+
     tag: Annotated[Literal["980"], Field(alias="980")]
     ind1: Literal[" ", ""]
     ind2: Literal[" ", ""]
@@ -177,6 +278,27 @@ class InvoiceField(BaseDataField):
 
 
 class ItemField(BaseDataField):
+    """
+    A 949 field in a monograph record
+
+    Args:
+        tag: The MARC tag for the field. Must be "949".
+        ind1: The first indicator for the field. Must be " ".
+        ind2: The second indicator for the field. Must be "1".
+        subfields: A list of dictionaries containing subfield tags and values.
+        item_call_no: The call number for the item from subfield a.
+        item_volume: The volume number for the item from subfield c.
+        item_agency: The agency code for the item from subfield h.
+        item_barcode: The barcode for the item from subfield i.
+        item_location: The location for the item from subfield l.
+        message: A message from the vendor from subfield m.
+        item_price: The price for the item from subfield p.
+        item_type: The type of item from subfield t.
+        item_message: A message from the vendor from subfield u.
+        item_vendor_code: The vendor code for the item from subfield v.
+        item_call_tag: The call number tag for the item from subfield z.
+    """
+
     tag: Annotated[Literal["949"], Field(alias="949")]
     ind1: Literal[" ", ""]
     ind2: Literal["1"]
@@ -194,10 +316,12 @@ class ItemField(BaseDataField):
     item_volume: Optional[
         Annotated[str, Field(exclude=True, examples=["v. 1", "v. 10"])]
     ] = None
-    item_agency: Annotated[
-        Literal["43"],
-        Field(exclude=True, examples=["43"]),
-    ]
+    item_agency: Optional[
+        Annotated[
+            Literal["43"],
+            Field(exclude=True, examples=["43"]),
+        ]
+    ] = None
     item_barcode: Annotated[
         str,
         Field(
@@ -247,8 +371,30 @@ class ItemField(BaseDataField):
         Field(exclude=True, examples=["8528"]),
     ]
 
+    @model_validator(mode="after")
+    def validate_item_agency(self) -> "ItemField":
+        error_msg = "Invalid Item Agency. Item Agency is required for"
+        if self.item_agency is None and self.item_location != "rc2ma":
+            raise ValueError(f"{error_msg} {self.item_location}")
+        else:
+            return self
+
 
 class LCClass(BaseDataField):
+    """
+    A 050 field in a MARC record. After validating the field the combination of
+    indicators is checked.
+
+    Args:
+        tag: The MARC tag for the field. Must be "050".
+        ind1: The first indicator for the field. Must be " ", "", "0", or "1".
+        ind2: The second indicator for the field. Must be "0" or "4".
+        subfields: A list of dictionaries containing subfield tags and values.
+        lcc: The Library of Congress Classification number from subfield a.
+
+
+    """
+
     tag: Annotated[Literal["050"], Field(alias="050")]
     ind1: Literal[" ", "", "0", "1"]
     ind2: Literal["0", "4"]
@@ -267,6 +413,17 @@ class LCClass(BaseDataField):
 
 
 class LibraryField(BaseDataField):
+    """
+    A 910 field in a MARC record
+
+    Args:
+        tags: The MARC tag for the field. Must be "910".
+        ind1: The first indicator for the field. Must be " ".
+        ind2: The second indicator for the field. Must be " ".
+        subfields: A list of dictionaries containing subfield tags and values.
+        library: The library code from subfield a.
+    """
+
     tag: Annotated[Literal["910"], Field(alias="910")]
     ind1: Literal[" ", ""]
     ind2: Literal[" ", ""]
@@ -278,6 +435,18 @@ class LibraryField(BaseDataField):
 
 
 class MonographDataField(BaseDataField):
+    """
+    A generic data field for monograph records. This model is used to validate
+    any fields that are not specific to a particular vendor or to shelf-ready
+    materials.
+
+    Args:
+        tag: The MARC tag for the field. Must be a three digit string.
+        ind1: The first indicator for the field. Must be " ", "" or a string.
+        ind2: The second indicator for the field. Must be " ", "" or a string.
+        subfields: A list of dictionaries containing subfield tags and values.
+    """
+
     tag: Annotated[
         str,
         Field(
@@ -293,6 +462,19 @@ class MonographDataField(BaseDataField):
 
 
 class OrderField(BaseDataField):
+    """
+    A 960 field in a MARC record
+
+    Args:
+        tag: The MARC tag for the field. Must be "960".
+        ind1: The first indicator for the field. Must be " " or "".
+        ind2: The second indicator for the field. Must be " " or "".
+        subfields: A list of dictionaries containing subfield tags and values.
+        order_price: The price of the order from subfield a.
+        order_location: The location of the order from subfield t.
+        order_fund: The fund for the order from subfield u.
+    """
+
     tag: Annotated[Literal["960"], Field(alias="960")]
     ind1: Literal[" ", ""]
     ind2: Literal[" ", ""]
@@ -318,6 +500,18 @@ class OrderField(BaseDataField):
 
 
 class OtherDataField(BaseDataField):
+    """
+    A generic data field for non-monograph records. This model is used to validate
+    any fields that are not specific to a particular vendor or to shelf-ready
+    materials.
+
+    Args:
+        tag: The MARC tag for the field. Must be a three digit string.
+        ind1: The first indicator for the field. Must be " ", "" or a string.
+        ind2: The second indicator for the field. Must be " ", "" or a string.
+        subfields: A list of dictionaries containing subfield tags and values.
+    """
+
     tag: Annotated[
         str,
         Field(

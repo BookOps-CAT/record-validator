@@ -1,10 +1,10 @@
+"""This module contains constants used in the record_validator package."""
+
 from enum import Enum
 
 
 class AllFields(Enum):
-    """
-    A class to translate fields used in the validator to MARC fields/subfields
-    """
+    """A class to translate a field model to its corresponding MARC tag"""
 
     ControlField001 = "001"
     ControlField003 = "003"
@@ -22,6 +22,7 @@ class AllFields(Enum):
 
     @classmethod
     def required_fields(cls):
+        """Return a list of tags for fields that are required in a vendor record."""
         return [
             cls.LCClass.value,
             cls.BibVendorCode.value,
@@ -32,6 +33,7 @@ class AllFields(Enum):
 
     @classmethod
     def control_fields(cls):
+        """Return a list of control field tags."""
         return [
             cls.ControlField001.value,
             cls.ControlField003.value,
@@ -43,10 +45,12 @@ class AllFields(Enum):
 
     @classmethod
     def monograph_fields(cls):
+        """Return a list of tags for fields that are required in a monograph record."""
         return [cls.BibCallNo.value, cls.ItemField.value]
 
     @classmethod
     def non_repeatable_fields(cls):
+        """Return a list of tags for fields that should not be repeated in a record."""
         return [
             cls.BibCallNo.value,
             cls.BibVendorCode.value,
@@ -63,6 +67,11 @@ class AllFields(Enum):
 
 
 class AllSubfields(Enum):
+    """
+    A class to translate a `Field` within a model to its corresponding
+    MARC subfield code.
+    """
+
     call_no = "h"
     vendor_code = "a"
     lcc = "a"
@@ -91,6 +100,7 @@ class AllSubfields(Enum):
 
     @staticmethod
     def get_alias(field_name: str) -> str:
+        """Return a field alias for a given field name based on its subfield code."""
         if field_name not in AllSubfields.__members__:
             return field_name
         else:
@@ -99,6 +109,10 @@ class AllSubfields(Enum):
 
 
 class ValidOrderItems(Enum):
+    """
+    A class to store valid order location, item location, and item type combinations.
+    """
+
     MAB = {"order_location": "MAB", "item_location": "rcmb2", "item_type": "2"}
     MAS = {"order_location": "MAS", "item_location": "rcmb2", "item_type": "2"}
     MAF = {"order_location": "MAF", "item_location": "rcmf2", "item_type": "55"}
@@ -157,4 +171,5 @@ class ValidOrderItems(Enum):
 
     @classmethod
     def to_list(cls):
+        """Return a list of valid order items."""
         return [item.value for item in cls]

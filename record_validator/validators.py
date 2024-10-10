@@ -1,3 +1,6 @@
+"""This module contains functions that are used in the record_validator package to
+validate data"""
+
 from itertools import chain
 from typing import Any, Dict, List, Union
 from pymarc import Leader
@@ -16,7 +19,25 @@ from record_validator.constants import AllFields, ValidOrderItems
 def validate_all(
     fields: List[Union[MarcField, Dict[str, Any]]]
 ) -> List[Union[MarcField, Dict[str, Any]]]:
-    """Validate MARC record fields."""
+    """
+    Validate MARC record fields. This function validates validates the fields of a
+    MARC record based on the record type. It first validates the existence of all
+    required fields and identifies extra fields. It then validates the fields with
+    an adapter that will identify the correct model for the field based on the
+    record type. Finally, if the record is for a monograph, it validates the
+    combination of order location, item location and item type. If any errors are
+    found, a `ValidationError` is raised.
+
+    Args:
+        fields: A list of MARC fields to validate.
+
+    Returns:
+        a list containing the validated fields
+
+    Raises:
+        ValidationError: If any errors are found during validation.
+
+    """
     errors = []
     record_type = get_record_type(fields)
     errors.extend(validate_fields(fields, record_type=record_type))
@@ -40,6 +61,7 @@ def validate_all(
 def validate_fields(
     fields: List[Union[MarcField, Dict[str, Any]]], record_type: str
 ) -> List[InitErrorDetails]:
+    """Validate the existence of all required fields and identify extra fields."""
     tag_list = [next(iter(field2dict(i))) for i in fields]
     required_tags = AllFields.required_fields()
     extra_tags = []
@@ -71,13 +93,14 @@ def validate_fields(
 
 
 def validate_leader(input: Union[str, Leader]) -> str:
-    """Validate the leader."""
+    """Validate the leader"""
     return str(input)
 
 
 def validate_order_items(
     fields: List[Union[MarcField, Dict[str, Any]]], error_locs: List[str]
 ) -> List[InitErrorDetails]:
+    """Validate the combination of order location, item location and item type."""
     field_list = [field2dict(i) for i in fields]
     tag_list = [next(iter(i)) for i in field_list]
     if (

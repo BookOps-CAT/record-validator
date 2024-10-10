@@ -1,3 +1,31 @@
+"""
+This module contains functions and types that are used in the record_validator package
+to identify the correct model to validate a field against.
+
+Functions:
+    get_adapter: Return a TypeAdapter for the correct model based on the material
+        type and vendor.
+    tag_discriminator: Get the tag of a field to use as a discriminator for the
+        TypeAdapter.
+
+Types:
+    AuxOtherFields:
+        A tuple containing models of fields that are valid in an Amalivre
+        non-monograph record. The models are annotated with the MARC tag of the
+        field or "data_field" for fields that do not need to be validated.
+    MonographFields:
+        A tuple containing models of fields that are valid in a monograph record.
+        The models are annotated with the MARC tag of the field or "data_field" for
+        fields that do not need to be validated
+    OtherFields:
+        A tuple containing models of fields that are valid in a non-monograph record
+        for any vendors other than Amalivre. The models are annotated with the MARC
+        tag of the field or "data_field" for fields that do not need to be validated.
+    FieldList:
+        A tuple of all possible fields that can be present in a record.
+
+"""
+
 from typing import Annotated, Union
 from pydantic import Tag, Discriminator, TypeAdapter
 from pymarc import Field as MarcField
@@ -23,6 +51,18 @@ from record_validator.field_models import (
 
 
 def get_adapter(record_type: Union[str, None]) -> TypeAdapter:
+    """
+    Return a `TypeAdapter` for the correct model based on the material type and
+    vendor. The `TypeAdapter` will contain a union of models for valid fields in
+    the specified record type. Certain fields require slightly different models
+    based on the vendor and/or material type.
+
+    Args:
+        record_type: string that combines the material type and vendor of the record.
+
+    Returns:
+        a TypeAdapter for the correct model based on the record_type.
+    """
     fields: tuple
     discriminator = True
     match record_type:
@@ -42,6 +82,7 @@ def get_adapter(record_type: Union[str, None]) -> TypeAdapter:
 
 
 def tag_discriminator(field: Union[MarcField, dict]) -> str:
+    """Get the tag of a field to use as a discriminator for the TypeAdapter."""
     tag = field.tag if isinstance(field, MarcField) else list(field.keys())[0]
     if tag in [i.value for i in AllFields]:
         return tag
