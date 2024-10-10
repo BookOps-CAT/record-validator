@@ -1,3 +1,5 @@
+"""This module contains utility functions for working with MARC records."""
+
 from itertools import chain
 import re
 from typing import Any, Dict, List, Union
@@ -5,6 +7,7 @@ from pymarc import Field as MarcField
 
 
 def dict2subfield(field: Dict[str, Any], code: str) -> List[Union[str, None]]:
+    """Extract subfield values from a MARC represented as a dict."""
     subfields = field[next(iter(field))]["subfields"]
     subfield_codes = list(chain(*[i.keys() for i in subfields]))
     out_list = []
@@ -16,6 +19,7 @@ def dict2subfield(field: Dict[str, Any], code: str) -> List[Union[str, None]]:
 
 
 def field2dict(field: Union[MarcField, Dict[str, Any]]) -> Dict[str, Any]:
+    """Convert a MARC field to a dict."""
     if isinstance(field, MarcField) and field.tag.startswith("00"):
         return {field.tag: field.data}
     elif isinstance(field, dict) and "tag" in field and "subfields" not in field:
@@ -35,6 +39,7 @@ def field2dict(field: Union[MarcField, Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def get_record_type(fields: List[Union[MarcField, Dict[str, Any]]]) -> str:
+    """Determine the record type based on the fields present in a MARC record."""
     if not isinstance(fields, list) or not all(
         isinstance(i, (MarcField, dict)) for i in fields
     ):
