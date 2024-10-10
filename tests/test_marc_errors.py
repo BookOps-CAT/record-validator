@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 from record_validator.marc_errors import (
-    get_examples_from_schema,
+    get_field_examples,
     MarcError,
     MarcValidationError,
 )
@@ -214,8 +214,8 @@ from record_validator.marc_models import RecordModel
         ),
     ],
 )
-def test_get_examples_from_schema(field, examples):
-    assert get_examples_from_schema(field) == examples
+def test_get_field_examples(field, examples):
+    assert get_field_examples(field) == examples
 
 
 class TestMarcErrorMonograph:
