@@ -75,6 +75,20 @@ def get_data_field_input(
 
 
 class BaseControlField(BaseModel):
+    """A class that defines a control field in a MARC record. This is the parent
+    class for all control field models. The `tag` attribute is a three-digit string
+    starting with '00'. The `value` attribute is a string that represents the value
+    of the control field. The `model_config` dictionary allows this and any child
+    models to have the fields be populated by name. Additional fields may not be
+    passed to the model during initialization and the `loc_by_alias` attribute is
+    set to `False` to prevent the model from using field aliases rather than field
+    names in error outputs.
+
+    Attributes:
+        tag: A three-digit string that represents the control field tag.
+        value: A string that represents the value of the control field.
+    """
+
     model_config = ConfigDict(populate_by_name=True, loc_by_alias=False, extra="forbid")
 
     tag: Annotated[str, Field(pattern=r"00[1-9]")]
@@ -83,14 +97,33 @@ class BaseControlField(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def parse_input(cls, input: Any) -> Any:
+        """Parse the input data into the correct format for a control field model."""
         return get_control_field_input(input)
 
     @model_serializer(mode="plain")
     def serialize_control_field(self) -> Dict[str, str]:
+        """Serialize the control field into a dictionary with the correct format."""
         return {self.tag: self.value}
 
 
 class BaseDataField(BaseModel):
+    """
+    A class that defines a data field in a MARC record. This is the parent
+    class for all data field models. The `tag` attribute is a three-digit string.
+    The `ind1` and `ind2` attributes are one-character strings that represent record's
+    indicators. The `subfields` attribute is a list of dictionaries where each
+    dictionary has a single key-value pair representing the subfield code and data.
+    The `model_config` dictionary allows this and any child models to have the fields
+    be populated by name. The `loc_by_alias` attribute is set to `False` to prevent
+    the model from using field aliases rather than field names in error outputs.
+    Aliases are generated for fields within this and any child models using the
+    `AllSubfields.get_alias` static_method.
+
+    Attributes:
+        tag: A three-digit string that represents the control field tag.
+        value: A string that represents the value of the control field.
+    """
+
     model_config = ConfigDict(
         populate_by_name=True,
         loc_by_alias=False,
@@ -105,12 +138,14 @@ class BaseDataField(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def parse_input(cls, input: Any) -> Any:
+        """Parse the input data into the correct format for a data field model."""
         return get_data_field_input(input, cls)
 
     @model_serializer(mode="plain")
     def serialize_data_field(
         self,
     ) -> Dict[str, Dict[str, Union[str, List[Dict[str, str]]]]]:
+        """Serialize the data field into a dictionary with the correct format."""
         return {
             self.tag: {
                 "ind1": self.ind1,
