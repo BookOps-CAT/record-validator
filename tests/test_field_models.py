@@ -1302,7 +1302,7 @@ def test_ItemField_invalid_item_location_with_agency(item_location_value):
     assert e.value.errors()[0]["type"] == "value_error"
     assert (
         e.value.errors()[0]["msg"]
-        == f"Value error, Invalid Item Agency. Item Agency is required for {item_location_value}"
+        == f"Value error, Invalid Item Agency for item location: {item_location_value}"
     )
 
 

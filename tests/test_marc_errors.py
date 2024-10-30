@@ -281,7 +281,7 @@ class TestMarcErrorMonograph:
         assert error.input is None
         assert isinstance(error.ctx, dict)
         assert error.type == "value_error"
-        assert error.msg == "Invalid Item Agency. Item Agency is required for rcmf2"
+        assert error.msg == "Invalid Item Agency for item location: rcmf2"
         assert error.loc_marc == "949$h"
 
     def test_MarcError_literal(self, stub_record):

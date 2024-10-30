@@ -373,8 +373,8 @@ class ItemField(BaseDataField):
 
     @model_validator(mode="after")
     def validate_item_agency(self) -> "ItemField":
-        error_msg = "Invalid Item Agency. Item Agency is required for"
-        if self.item_agency is None and self.item_location != "rc2ma":
+        error_msg = "Invalid Item Agency for item location:"
+        if self.item_agency is None and self.item_location not in ["rc2ma", None]:
             raise ValueError(f"{error_msg} {self.item_location}")
         else:
             return self
