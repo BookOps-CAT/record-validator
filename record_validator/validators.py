@@ -100,7 +100,7 @@ def validate_leader(input: Union[str, Leader]) -> str:
 def validate_order_items(
     fields: List[Union[MarcField, Dict[str, Any]]], error_locs: List[str]
 ) -> List[InitErrorDetails]:
-    """Validate the combination of order location, item location and item type."""
+    """Validate the combination of values in order and item records."""
     field_list = [field2dict(i) for i in fields]
     tag_list = [next(iter(i)) for i in field_list]
     if (
@@ -115,10 +115,12 @@ def validate_order_items(
     order_locs = [dict2subfield(i, "t") for i in field_list if "960" in i]
     item_locs = [dict2subfield(i, "l") for i in field_list if "949" in i]
     item_types = [dict2subfield(i, "t") for i in field_list if "949" in i]
+    item_agency = [dict2subfield(i, "h") for i in field_list if "949" in i]
     assert len(order_locs) == 1, f"Expected 1 order location, got {len(order_locs)}"
+    order_loc = list(chain(*order_locs))[0]
     order_items = [
         {
-            "order_location": list(chain(*order_locs))[0],
+            "order_location": order_loc,
             "item_location": il,
             "item_type": it,
         }
@@ -134,6 +136,21 @@ def validate_order_items(
                     "order_item_mismatch", f"{error_msg}: {order_item}"
                 ),
                 input=order_item,
+            )
+        )
+    item_agency_msg = "Invalid Item Agency for order location:"
+    if (
+        any(i is None for i in list(chain(*item_agency)))
+        and any((i == "rc2ma" or i is None) for i in list(chain(*item_locs)))
+        and order_loc != "MAL"
+    ):
+        errors.append(
+            InitErrorDetails(
+                type=PydanticCustomError(
+                    "value_error", f"{item_agency_msg} {order_loc}"
+                ),
+                input=None,
+                loc=("949",),
             )
         )
     return errors
