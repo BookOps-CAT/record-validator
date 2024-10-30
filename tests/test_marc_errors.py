@@ -281,8 +281,73 @@ class TestMarcErrorMonograph:
         assert error.input is None
         assert isinstance(error.ctx, dict)
         assert error.type == "value_error"
-        assert error.msg == "Invalid Item Agency. Item Agency is required for rcmf2"
+        assert error.msg == "Invalid Item Agency for item location: rcmf2"
         assert error.loc_marc == "949$h"
+
+    def test_MarcError_item_agency_MAF(self, stub_record):
+        stub_record["949"].delete_subfield("h")
+        stub_record["949"].delete_subfield("l")
+        stub_record["949"].add_subfield("l", "rc2ma")
+        with pytest.raises(ValidationError) as e:
+            RecordModel(leader=stub_record.leader, fields=stub_record.fields)
+        errors = [MarcError(i) for i in e.value.errors()]
+        assert len(e.value.errors()) == 2
+        assert sorted([i["type"] for i in e.value.errors()]) == sorted(
+            [
+                "value_error",
+                "order_item_mismatch",
+            ]
+        )
+        assert sorted([i.loc for i in errors]) == sorted(
+            [
+                ("fields", "949", "item_agency"),
+                ("order_field", "item_location", "item_type"),
+            ]
+        )
+        assert [i.input for i in errors] == [
+            {"order_location": "MAF", "item_location": "rc2ma", "item_type": "55"},
+            None,
+        ]
+        assert sorted([i.msg for i in errors]) == sorted(
+            [
+                "Invalid Item Agency for order location: MAF",
+                "Invalid combination of item_type, order_location and item_location: {'order_location': 'MAF', 'item_location': 'rc2ma', 'item_type': '55'}",
+            ]
+        )
+
+    def test_MarcError_item_agency_multi_item(self, stub_record, stub_evp_item):
+        stub_record["949"].delete_subfield("h")
+        stub_record["949"].delete_subfield("l")
+        stub_record["960"].delete_subfield("t")
+        stub_record["960"].add_subfield("t", "MAL")
+        stub_evp_item.delete_subfield("h")
+        stub_record.add_field(stub_evp_item)
+        with pytest.raises(ValidationError) as e:
+            RecordModel(leader=stub_record.leader, fields=stub_record.fields)
+        errors = [MarcError(i) for i in e.value.errors()]
+        assert len(e.value.errors()) == 2
+        assert sorted([i.type for i in errors]) == sorted(
+            [
+                "value_error",
+                "order_item_mismatch",
+            ]
+        )
+        assert sorted([i.loc for i in errors]) == sorted(
+            [
+                ("fields", "949", "item_agency"),
+                ("order_field", "item_location", "item_type"),
+            ]
+        )
+        assert [i.input for i in errors] == [
+            None,
+            {"order_location": "MAL", "item_location": "rcmf2", "item_type": "55"},
+        ]
+        assert sorted([i.msg for i in errors]) == sorted(
+            [
+                "Invalid Item Agency for item location: rcmf2",
+                "Invalid combination of item_type, order_location and item_location: {'order_location': 'MAL', 'item_location': 'rcmf2', 'item_type': '55'}",
+            ]
+        )
 
     def test_MarcError_literal(self, stub_record):
         stub_record["960"].delete_subfield("t")
@@ -332,6 +397,7 @@ class TestMarcErrorMonograph:
             == "Invalid indicators. Valid combinations are: [(' ', '4'), ('', '4'), ('0', '0'), ('1', '0')]"
         )
         assert error.loc_marc == "050"
+        assert error.loc == ("fields", "050")
 
     def test_MarcError_extra_fields(self, stub_record):
         record_dict = stub_record.as_dict()

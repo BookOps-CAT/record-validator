@@ -99,6 +99,47 @@ class TestValidateMonograph:
             "item_type": "55",
         }
 
+    def test_validate_order_items_no_item_agency_MAL(self, stub_record):
+        stub_record["960"].delete_subfield("t")
+        stub_record["960"].add_subfield("t", "MAL")
+        stub_record["949"].delete_subfield("l")
+        stub_record["949"].delete_subfield("h")
+        stub_record["949"].delete_subfield("t")
+        errors = []
+        with does_not_raise():
+            errors.extend(
+                validate_order_items(
+                    fields=stub_record.as_dict()["fields"],
+                    error_locs=[],
+                )
+            )
+        assert len(errors) == 0
+        assert isinstance(errors, list)
+
+    def test_validate_order_items_no_item_agency_MAF(self, stub_record):
+        stub_record["949"].delete_subfield("l")
+        stub_record["949"].delete_subfield("h")
+        errors = []
+        with does_not_raise():
+            errors.extend(
+                validate_order_items(
+                    fields=stub_record.as_dict()["fields"],
+                    error_locs=[],
+                )
+            )
+        error_types = [str(i["type"]) for i in errors]
+        error_inputs = [i["input"] for i in errors]
+        assert len(errors) == 2
+        assert isinstance(errors, list)
+        assert error_types == [
+            "Invalid combination of item_type, order_location and item_location: {'order_location': 'MAF', 'item_location': None, 'item_type': '55'}",
+            "Invalid Item Agency for order location: MAF",
+        ]
+        assert error_inputs == [
+            {"order_location": "MAF", "item_location": None, "item_type": "55"},
+            None,
+        ]
+
     def test_validate_order_items_no_errors(self, stub_record):
         errors = []
         with does_not_raise():
