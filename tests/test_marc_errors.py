@@ -236,6 +236,23 @@ class TestMarcErrorMonograph:
         )
         assert error.loc_marc == "852$h"
 
+    def test_MarcError_string_too_long(self, stub_record):
+        stub_record["852"].delete_subfield("h")
+        stub_record["852"].add_subfield("h", "ReCAP 24-1191000")
+        with pytest.raises(ValidationError) as e:
+            RecordModel(leader=stub_record.leader, fields=stub_record.fields)
+        error = MarcError(e.value.errors()[0])
+        assert len(e.value.errors()) == 1
+        assert error.loc == ("fields", "852", "call_no")
+        assert error.input == "ReCAP 24-1191000"
+        assert isinstance(error.ctx, dict)
+        assert error.type == "string_too_long"
+        assert (
+            error.msg
+            == "String should have at most 15 characters. Examples: ['ReCAP 23-000001', 'ReCAP 24-100001', 'ReCAP 25-222000']"
+        )
+        assert error.loc_marc == "852$h"
+
     def test_MarcError_missing_entire_field(self, stub_record):
         stub_record.remove_fields("980")
         with pytest.raises(ValidationError) as e:
@@ -623,6 +640,23 @@ class TestMarcErrorOther:
         assert all(isinstance(i.input, float) for i in errors)
         assert error_types == ["string_type", "string_type"]
         assert errors_loc_marc == ["960$s", "960$s"]
+
+    def test_RecordModel_aux_other_call_no_length_error(self, stub_auxam_monograph):
+        stub_auxam_monograph["300"].delete_subfield("a")
+        stub_auxam_monograph.remove_fields("949")
+        stub_auxam_monograph["300"].add_subfield("a", "2 volumes :")
+        with pytest.raises(ValidationError) as e:
+            RecordModel(
+                leader=stub_auxam_monograph.leader, fields=stub_auxam_monograph.fields
+            )
+        errors = [MarcError(i) for i in e.value.errors()]
+        assert len(errors) == 1
+        assert [i.loc for i in errors][0] == ("fields", "852", "call_no")
+        assert [i.msg for i in errors][
+            0
+        ] == "String should have at most 9 characters. Examples: ['ReCAP 23-', 'ReCAP 24-', 'ReCAP 25-']"
+        assert [i.type for i in errors][0] == "string_too_long"
+        assert [i.loc_marc for i in errors][0] == "852$h"
 
 
 class TestMarcValidationErrorMonograph:

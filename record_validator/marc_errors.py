@@ -106,9 +106,15 @@ class MarcError:
     def _get_msg(self) -> Union[str, None]:
         """Get the error message. Adds examples to the message for certain errors."""
         msg = self.original_error.get("msg")
-        if msg is not None and self.ctx is not None and "pattern" in self.ctx:
+        if (
+            msg is not None
+            and self.ctx is not None
+            and ("pattern" in self.ctx or "string" in self.type)
+        ):
             examples = get_field_examples(self.loc)
             out_msg = msg.split(" '")[0].strip()
+            if examples and "852" in self.loc and "max_length" in self.ctx:
+                examples = [i[: self.ctx["max_length"]] for i in examples]
             return f"{out_msg}. Examples: {examples}"
         elif msg is not None and self.ctx is not None and "expected" in self.ctx:
             examples = self.ctx["expected"]
