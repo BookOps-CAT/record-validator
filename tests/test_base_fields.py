@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
 from pymarc import Field as MarcField
+
 from record_validator.base_fields import (
     BaseControlField,
     BaseDataField,

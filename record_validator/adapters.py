@@ -27,8 +27,10 @@ Types:
 """
 
 from typing import Annotated, Union
-from pydantic import Tag, Discriminator, TypeAdapter
+
+from pydantic import Discriminator, Tag, TypeAdapter
 from pymarc import Field as MarcField
+
 from record_validator.constants import AllFields
 from record_validator.field_models import (
     AuxBibCallNo,

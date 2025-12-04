@@ -1,9 +1,10 @@
 import pytest
 from pydantic import ValidationError
+
 from record_validator.marc_errors import (
-    get_field_examples,
     MarcError,
     MarcValidationError,
+    get_field_examples,
 )
 from record_validator.marc_models import RecordModel
 
@@ -652,9 +653,10 @@ class TestMarcErrorOther:
         errors = [MarcError(i) for i in e.value.errors()]
         assert len(errors) == 1
         assert [i.loc for i in errors][0] == ("fields", "852", "call_no")
-        assert [i.msg for i in errors][
-            0
-        ] == "String should have at most 9 characters. Examples: ['ReCAP 23-', 'ReCAP 24-', 'ReCAP 25-']"
+        assert (
+            [i.msg for i in errors][0]
+            == "String should have at most 9 characters. Examples: ['ReCAP 23-', 'ReCAP 24-', 'ReCAP 25-']"
+        )
         assert [i.type for i in errors][0] == "string_too_long"
         assert [i.loc_marc for i in errors][0] == "852$h"
 
