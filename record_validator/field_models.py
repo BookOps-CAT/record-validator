@@ -1,8 +1,10 @@
 """This module contains classes that define MARC fields provided in vendor records"""
 
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+
 from pydantic import Field, model_validator
-from record_validator.base_fields import BaseDataField, BaseControlField
+
+from record_validator.base_fields import BaseControlField, BaseDataField
 
 
 class AuxBibCallNo(BaseDataField):
@@ -341,6 +343,7 @@ class ItemField(BaseDataField):
                 "rc2ma",
                 "rcmp2",
                 "rcmb2",
+                "rcpd2",
                 "rcph2",
                 "rcpm2",
                 "rcpt2",

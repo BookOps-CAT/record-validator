@@ -1,8 +1,9 @@
 """This module contains utility functions for working with MARC records."""
 
-from itertools import chain
 import re
+from itertools import chain
 from typing import Any, Dict, List, Union
+
 from pymarc import Field as MarcField
 
 
@@ -59,7 +60,6 @@ def get_record_type(fields: List[Union[MarcField, Dict[str, Any]]]) -> str:
     subject_fields = [i for i in field_list if next(iter(i)).startswith("6")]
 
     aux_call_nos = list(chain(*[dict2subfield(i, "h") for i in aux_call_no_fields]))
-    order_locs = list(chain(*[dict2subfield(i, "t") for i in field_list if "960" in i]))
     phys_desc = list(chain(*[dict2subfield(i, "a") for i in field_list if "300" in i]))
     subjects = list(chain(*[dict2subfield(i, "v") for i in subject_fields]))
 
@@ -70,8 +70,6 @@ def get_record_type(fields: List[Union[MarcField, Dict[str, Any]]]) -> str:
     if any(j is not None for j in [aux_pattern.match(str(i)) for i in aux_call_nos]):
         material_type = "other"
     elif any(j is not None for j in [catalogue.match(str(i)) for i in subjects]):
-        material_type = "other"
-    elif any(i == "PAD" for i in order_locs) is True:
         material_type = "other"
     elif any(j is not None for j in [multivol.match(str(i)) for i in phys_desc]):
         material_type = "other"
