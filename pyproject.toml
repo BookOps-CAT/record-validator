@@ -16,7 +16,7 @@ pytest-cov = "^5.0.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = '--cov=overload_web/'
+addopts = '--cov=record_validator/'
 
 [tool.coverage.run]
 relative_files = true
