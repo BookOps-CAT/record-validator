@@ -1,13 +1,12 @@
 """This module contains pydantic models for validating vendor-provided MARC records."""
 
 from typing import Annotated, Dict, List, Union
+
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from pymarc import Field as MarcField
-from record_validator.validators import (
-    validate_leader,
-    validate_all,
-)
+
+from record_validator.validators import validate_all, validate_leader
 
 
 class RecordModel(BaseModel):

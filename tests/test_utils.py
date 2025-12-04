@@ -1,4 +1,5 @@
 import pytest
+
 from record_validator.utils import (
     dict2subfield,
     field2dict,
@@ -57,7 +58,7 @@ def test_get_record_type_monograph(stub_leila_monograph):
 
 
 def test_get_record_type_dance(stub_dance_record):
-    assert get_record_type(fields=stub_dance_record.fields) == "evp_other"
+    assert get_record_type(fields=stub_dance_record.fields) == "evp_monograph"
 
 
 def test_get_record_type_pamphlet(stub_pamphlet_record):

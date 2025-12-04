@@ -1,6 +1,6 @@
 import pytest
-from pymarc import Record, Subfield
 from pymarc import Field as MarcField
+from pymarc import Record, Subfield
 
 
 @pytest.fixture
@@ -210,13 +210,35 @@ def stub_record_multiple_items(stub_record):
 
 @pytest.fixture
 def stub_dance_record(stub_record):
-    stub_record.remove_fields("949", "852")
-    stub_record.remove_fields("960")
+    stub_record.remove_fields("949", "960")
+    stub_record.add_field(
+        MarcField(
+            tag="949",
+            indicators=[" ", "1"],
+            subfields=[
+                Subfield(code="z", value="8528"),
+                Subfield(code="a", value="ReCAP 24-100000"),
+                Subfield(code="c", value="1"),
+                Subfield(code="h", value="43"),
+                Subfield(code="i", value="33433123456789"),
+                Subfield(code="l", value="rcpd2"),
+                Subfield(code="m", value="bar"),
+                Subfield(code="p", value="1.00"),
+                Subfield(code="t", value="55"),
+                Subfield(code="u", value="foo"),
+                Subfield(code="v", value="EVP"),
+            ],
+        )
+    )
     stub_record.add_field(
         MarcField(
             tag="960",
-            indicators=[" ", "1"],
-            subfields=[Subfield(code="t", value="PAD")],
+            indicators=[" ", " "],
+            subfields=[
+                Subfield(code="s", value="100"),
+                Subfield(code="t", value="PAD"),
+                Subfield(code="u", value="123456apprv"),
+            ],
         )
     )
     return stub_record

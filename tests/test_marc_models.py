@@ -1,7 +1,9 @@
+from contextlib import nullcontext as does_not_raise
+
 import pytest
 from pydantic import ValidationError
-from contextlib import nullcontext as does_not_raise
 from pymarc import Leader, MARCReader
+
 from record_validator.marc_models import RecordModel
 
 
@@ -269,6 +271,7 @@ class TestRecordModelMonograph:
             ("MAF", "rcmf2", None),
             ("MAG", "rcmg2", "55"),
             ("MAG", "rcmg2", None),
+            ("PAD", "rcpd2", "55"),
         ],
     )
     def test_RecordModel_valid_location_combos(
@@ -304,6 +307,7 @@ class TestRecordModelMonograph:
             ("MAG", "rcmf2", "55"),
             ("MAF", "rc2ma", None),
             ("MAL", "rcmg2", "55"),
+            ("PAD", "rcpd2", "2"),
         ],
     )
     def test_RecordModel_invalid_order_item_data(

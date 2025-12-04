@@ -1,10 +1,12 @@
 from contextlib import nullcontext as does_not_raise
-from pydantic import ValidationError
+
 import pytest
+from pydantic import ValidationError
+
 from record_validator.validators import (
-    validate_leader,
     validate_all,
     validate_fields,
+    validate_leader,
     validate_order_items,
 )
 

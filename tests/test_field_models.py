@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
 from pymarc import Field as MarcField
+
 from record_validator.field_models import (
     AuxBibCallNo,
     BibCallNo,

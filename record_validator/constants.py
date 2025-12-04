@@ -114,7 +114,6 @@ class ValidOrderItems(Enum):
     """
 
     MAB = {"order_location": "MAB", "item_location": "rcmb2", "item_type": "2"}
-    MAS = {"order_location": "MAS", "item_location": "rcmb2", "item_type": "2"}
     MAF = {"order_location": "MAF", "item_location": "rcmf2", "item_type": "55"}
     MAF_NO_ITEM_TYPE = {
         "order_location": "MAF",
@@ -144,6 +143,8 @@ class ValidOrderItems(Enum):
         "item_type": None,
     }
     MAP = {"order_location": "MAP", "item_location": "rcmp2", "item_type": "2"}
+    MAS = {"order_location": "MAS", "item_location": "rcmb2", "item_type": "2"}
+    PAD = {"order_location": "PAD", "item_location": "rcpd2", "item_type": "55"}
     PAH = {"order_location": "PAH", "item_location": "rcph2", "item_type": "55"}
     PAH_NO_ITEM_TYPE = {
         "order_location": "PAH",

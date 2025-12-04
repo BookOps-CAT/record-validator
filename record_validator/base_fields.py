@@ -23,8 +23,10 @@ Functions:
 """
 
 from typing import Annotated, Any, Dict, List, Literal, Union
-from pymarc import Field as MarcField
+
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
+from pymarc import Field as MarcField
+
 from record_validator.constants import AllFields, AllSubfields
 
 

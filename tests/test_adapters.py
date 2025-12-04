@@ -1,14 +1,16 @@
 from typing import get_args
+
+import pytest
 from pydantic import Tag, TypeAdapter
 from pymarc import Field as MarcField
-import pytest
+
 from record_validator.adapters import (
-    get_adapter,
-    tag_discriminator,
     AuxOtherFields,
     FieldList,
     MonographFields,
     OtherFields,
+    get_adapter,
+    tag_discriminator,
 )
 from record_validator.field_models import (
     AuxBibCallNo,

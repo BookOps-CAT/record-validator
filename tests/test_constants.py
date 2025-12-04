@@ -1,4 +1,5 @@
 import pytest
+
 from record_validator.constants import AllFields, AllSubfields, ValidOrderItems
 
 
@@ -115,7 +116,6 @@ def test_AllSubfields_get_alias(field_name, mapping):
 def test_ValidOrderItems_to_list():
     assert ValidOrderItems.to_list() == [
         {"order_location": "MAB", "item_location": "rcmb2", "item_type": "2"},
-        {"order_location": "MAS", "item_location": "rcmb2", "item_type": "2"},
         {"order_location": "MAF", "item_location": "rcmf2", "item_type": "55"},
         {"order_location": "MAF", "item_location": "rcmf2", "item_type": None},
         {"order_location": "MAG", "item_location": "rcmg2", "item_type": "55"},
@@ -125,6 +125,8 @@ def test_ValidOrderItems_to_list():
         {"order_location": "MAL", "item_location": "rc2ma", "item_type": None},
         {"order_location": "MAL", "item_location": None, "item_type": None},
         {"order_location": "MAP", "item_location": "rcmp2", "item_type": "2"},
+        {"order_location": "MAS", "item_location": "rcmb2", "item_type": "2"},
+        {"order_location": "PAD", "item_location": "rcpd2", "item_type": "55"},
         {"order_location": "PAH", "item_location": "rcph2", "item_type": "55"},
         {"order_location": "PAH", "item_location": "rcph2", "item_type": None},
         {"order_location": "PAM", "item_location": "rcpm2", "item_type": "55"},
