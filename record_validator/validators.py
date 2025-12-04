@@ -3,21 +3,19 @@ validate data"""
 
 from itertools import chain
 from typing import Any, Dict, List, Union
-from pymarc import Leader
-from pymarc import Field as MarcField
+
 from pydantic import ValidationError
-from pydantic_core import PydanticCustomError, InitErrorDetails
+from pydantic_core import InitErrorDetails, PydanticCustomError
+from pymarc import Field as MarcField
+from pymarc import Leader
+
 from record_validator.adapters import get_adapter
-from record_validator.utils import (
-    get_record_type,
-    field2dict,
-    dict2subfield,
-)
 from record_validator.constants import AllFields, ValidOrderItems
+from record_validator.utils import dict2subfield, field2dict, get_record_type
 
 
 def validate_all(
-    fields: List[Union[MarcField, Dict[str, Any]]]
+    fields: List[Union[MarcField, Dict[str, Any]]],
 ) -> List[Union[MarcField, Dict[str, Any]]]:
     """
     Validate MARC record fields. This function validates validates the fields of a
@@ -69,7 +67,7 @@ def validate_fields(
         extra_tags.append("949")
     elif "other" in record_type:
         extra_tags.extend(AllFields.monograph_fields())
-    elif "monograph" in record_type:
+    else:
         required_tags.extend(AllFields.monograph_fields())
     extra_fields = [i for i in extra_tags if i in tag_list]
     missing_fields = [i for i in required_tags if i not in tag_list]
