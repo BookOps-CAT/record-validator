@@ -5,6 +5,7 @@ from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 from pydantic import Field, model_validator
 
 from record_validator.base_fields import BaseControlField, BaseDataField
+from record_validator.constants import RECAP_AUX_CALL_NO_PATTERN, RECAP_CALL_NO_PATTERN
 
 
 class AuxBibCallNo(BaseDataField):
@@ -26,7 +27,7 @@ class AuxBibCallNo(BaseDataField):
     call_no: Annotated[
         str,
         Field(
-            pattern=r"^ReCAP 23-$|^ReCAP 24-$|^ReCAP 25-$",
+            pattern=RECAP_AUX_CALL_NO_PATTERN,
             min_length=9,
             max_length=9,
             exclude=True,
@@ -54,7 +55,7 @@ class BibCallNo(BaseDataField):
     call_no: Annotated[
         str,
         Field(
-            pattern=r"^ReCAP 23-\d{6}$|^ReCAP 24-\d{6}$|^ReCAP 25-\d{6}$",
+            pattern=RECAP_CALL_NO_PATTERN,
             min_length=15,
             max_length=15,
             exclude=True,
@@ -308,7 +309,7 @@ class ItemField(BaseDataField):
     item_call_no: Annotated[
         str,
         Field(
-            pattern=r"^ReCAP 23-\d{6}$|^ReCAP 24-\d{6}$|^ReCAP 25-\d{6}$",
+            pattern=RECAP_CALL_NO_PATTERN,
             min_length=15,
             max_length=15,
             examples=["ReCAP 23-000001", "ReCAP 24-100001", "ReCAP 25-222000"],

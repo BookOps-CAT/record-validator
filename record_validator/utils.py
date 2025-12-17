@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Union
 
 from pymarc import Field as MarcField
 
+from record_validator.constants import RECAP_AUX_CALL_NO_PATTERN
+
 
 def dict2subfield(field: Dict[str, Any], code: str) -> List[Union[str, None]]:
     """Extract subfield values from a MARC represented as a dict."""
@@ -63,7 +65,7 @@ def get_record_type(fields: List[Union[MarcField, Dict[str, Any]]]) -> str:
     phys_desc = list(chain(*[dict2subfield(i, "a") for i in field_list if "300" in i]))
     subjects = list(chain(*[dict2subfield(i, "v") for i in subject_fields]))
 
-    aux_pattern = re.compile(r"^ReCAP 2[345]-$")
+    aux_pattern = re.compile(RECAP_AUX_CALL_NO_PATTERN)
     catalogue = re.compile(r"^[cC]atalogue(s?) [rR]aisonn[eé](s?)")
     multivol = re.compile(r"^(\d+)( v\.| volumes)( :$| ;$|$| $)")
     pamphlet = re.compile(r"^(\d|[0-4][0-9])( p\.| pages)( :$| ;$|$| $)")

@@ -2,8 +2,7 @@
 
 from typing import Annotated, Dict, List, Union
 
-from pydantic import BaseModel, ConfigDict, Field
-from pydantic.functional_validators import AfterValidator, BeforeValidator
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field
 from pymarc import Field as MarcField
 
 from record_validator.validators import validate_all, validate_leader

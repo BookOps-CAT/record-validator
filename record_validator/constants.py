@@ -2,6 +2,9 @@
 
 from enum import Enum
 
+RECAP_CALL_NO_PATTERN = r"^ReCAP 2[3-9]-\d{6}$"
+RECAP_AUX_CALL_NO_PATTERN = r"^ReCAP 2[3-9]-$"
+
 
 class AllFields(Enum):
     """A class to translate a field model to its corresponding MARC tag"""
