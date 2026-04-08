@@ -285,12 +285,12 @@ class ItemField(BaseDataField):
             exclude=True,
         ),
     ]
-    item_volume: (
-        Annotated[str, Field(exclude=True, examples=["v. 1", "v. 10"])] | None
-    ) = None
-    item_agency: (
-        Annotated[Literal["43"], Field(exclude=True, examples=["43"])] | None
-    ) = None
+    item_volume: Annotated[
+        str | None, Field(exclude=True, examples=["v. 1", "v. 10"])
+    ] = None
+    item_agency: Annotated[
+        Literal["43"] | None, Field(exclude=True, examples=["43"])
+    ] = None
     item_barcode: Annotated[
         str,
         Field(
@@ -318,12 +318,12 @@ class ItemField(BaseDataField):
         | None,
         Field(exclude=True, default=None, examples=["rcmb2", "rcmf2"]),
     ]
-    message: Annotated[str, Field(exclude=True)] | None = None
+    message: Annotated[str | None, Field(exclude=True)] = None
     item_price: Annotated[
         str, Field(pattern=r"^\d{1,}\.\d{2}$", exclude=True, examples=["1.00", "0.00"])
     ]
     item_type: Annotated[Literal["2", "55"] | None, Field(exclude=True, default=None)]
-    item_message: Annotated[str, Field(exclude=True)] | None = None
+    item_message: Annotated[str | None, Field(exclude=True)] = None
     item_vendor_code: Annotated[
         Literal["EVP", "AUXAM", "LEILA"],
         Field(exclude=True, examples=["EVP", "AUXAM", "LEILA"]),
