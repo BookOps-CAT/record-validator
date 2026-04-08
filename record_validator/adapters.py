@@ -52,7 +52,7 @@ from record_validator.field_models import (
 )
 
 
-def get_adapter(record_type: Union[str, None]) -> TypeAdapter:
+def get_adapter(record_type: str | None) -> TypeAdapter:
     """
     Return a `TypeAdapter` for the correct model based on the material type and
     vendor. The `TypeAdapter` will contain a union of models for valid fields in
@@ -83,7 +83,7 @@ def get_adapter(record_type: Union[str, None]) -> TypeAdapter:
         return TypeAdapter(Union[fields])
 
 
-def tag_discriminator(field: Union[MarcField, dict]) -> str:
+def tag_discriminator(field: MarcField | dict) -> str:
     """Get the tag of a field to use as a discriminator for the TypeAdapter."""
     tag = field.tag if isinstance(field, MarcField) else list(field.keys())[0]
     if tag in [i.value for i in AllFields]:

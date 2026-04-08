@@ -1,6 +1,6 @@
 """A module to translate errors from the validator to a more readable format"""
 
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 from pydantic_core import ErrorDetails
 
@@ -8,7 +8,7 @@ from record_validator.adapters import get_adapter
 from record_validator.constants import AllFields, AllSubfields
 
 
-def get_field_examples(loc: tuple) -> Union[List[str], None]:
+def get_field_examples(loc: tuple) -> list[str] | None:
     """
     Get the examples provided in a model's schema for a given error location
 
@@ -64,13 +64,13 @@ class MarcError:
 
         self.original_error = error
         self.type: str = error["type"]
-        self.ctx: Union[dict[str, Any], None] = error.get("ctx", None)
+        self.ctx: dict[str, Any] | None = error.get("ctx", None)
         self.input: Any = self._get_input()
         self.loc: tuple = self._get_loc()
-        self.loc_marc: Union[str, tuple] = self._loc2marc()
-        self.msg: Union[str, None] = self._get_msg()
+        self.loc_marc: str | tuple = self._loc2marc()
+        self.msg: str | None = self._get_msg()
 
-    def _get_input(self) -> Union[str, tuple, List[str], None]:
+    def _get_input(self) -> str | tuple | list[str] | None:
         """Get the input that caused the error. Adds an input for ValueErrors."""
         input = self.original_error.get("input")
         if input is not None and "Invalid indicators" in self.original_error["msg"]:
@@ -85,11 +85,7 @@ class MarcError:
     def _get_loc(self) -> tuple:
         """Get the location of the error. Adds a location for custom errors."""
         if self.type == "order_item_mismatch":
-            return (
-                "order_field",
-                "item_location",
-                "item_type",
-            )
+            return ("order_field", "item_location", "item_type")
         elif (
             self.type == "missing" and "Field required:" in self.original_error["msg"]
         ) or (
@@ -105,7 +101,7 @@ class MarcError:
         else:
             return tuple(self.original_error["loc"])
 
-    def _get_msg(self) -> Union[str, None]:
+    def _get_msg(self) -> str | None:
         """Get the error message. Adds examples to the message for certain errors."""
         msg = self.original_error.get("msg")
         if (
@@ -131,7 +127,7 @@ class MarcError:
         else:
             return self.original_error.get("msg", None)
 
-    def _loc2marc(self) -> Union[str, Tuple[str, str, str]]:
+    def _loc2marc(self) -> str | tuple[str, str, str]:
         """Translate the error location to MARC tags"""
         out_loc = []
         if self.type == "order_item_mismatch":
@@ -155,7 +151,7 @@ class MarcError:
 class MarcValidationError:
     """A class to model a list of `MarcError` objects as a single error object"""
 
-    def __init__(self, errors: List[ErrorDetails]):
+    def __init__(self, errors: list[ErrorDetails]):
         """
         Args:
             errors:
@@ -184,7 +180,7 @@ class MarcValidationError:
         self.invalid_fields = self._get_invalid_fields()
         self.order_item_mismatches = self._get_order_item_mismatch_errors()
 
-    def _get_missing_fields(self) -> List[Union[str, Tuple[str, str]]]:
+    def _get_missing_fields(self) -> list[str | tuple[str, str]]:
         """Get MARC tags for missing fields from the list of errors"""
         return [
             i.loc_marc
@@ -192,11 +188,11 @@ class MarcValidationError:
             if i.type == "missing" or i.type == "missing_required_field"
         ]
 
-    def _get_extra_fields(self) -> List[Union[str, Tuple[str, str]]]:
+    def _get_extra_fields(self) -> list[str | tuple[str, str]]:
         """Get MARC tags for extra fields from the list of errors"""
         return [i.loc_marc for i in self.errors if i.type == "extra_forbidden"]
 
-    def _get_invalid_fields(self) -> List[Dict[str, Any]]:
+    def _get_invalid_fields(self) -> list[dict[str, Any]]:
         """
         Get a list of dictionaries with the field, input and error type for fields
         with other errors (eg. string_pattern_error, literal_error).
@@ -223,14 +219,14 @@ class MarcValidationError:
             invalid_field_list.append(out)
         return invalid_field_list
 
-    def _get_order_item_mismatch_errors(self) -> List[Dict[str, str]]:
+    def _get_order_item_mismatch_errors(self) -> list[dict[str, str]]:
         """
         Get a list of dictionaries with the order location, item location, and
         item type that do not match valid combinations.
         """
         return [i.input for i in self.errors if i.type == "order_item_mismatch"]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return the error data as a dictionary"""
         return {
             "error_count": self.error_count,

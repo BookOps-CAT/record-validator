@@ -1,6 +1,6 @@
 """This module contains pydantic models for validating vendor-provided MARC records."""
 
-from typing import Annotated, Dict, List, Union
+from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field
 from pymarc import Field as MarcField
@@ -35,9 +35,6 @@ class RecordModel(BaseModel):
         BeforeValidator(validate_leader),
     ]
     fields: Annotated[
-        Union[
-            List[MarcField],
-            List[Dict[str, Union[str, Dict[str, Union[str, List[Dict[str, str]]]]]]],
-        ],
+        list[MarcField] | list[dict[str, str | dict[str, str | list[dict[str, str]]]]],
         AfterValidator(validate_all),
     ]
