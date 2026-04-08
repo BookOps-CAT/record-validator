@@ -1,6 +1,6 @@
 """This module contains classes that define MARC fields provided in vendor records"""
 
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, model_validator
 
@@ -23,7 +23,7 @@ class AuxBibCallNo(BaseDataField):
     tag: Annotated[Literal["852"], Field(alias="852")]
     ind1: Literal["8"]
     ind2: Literal[" ", ""]
-    subfields: List[Dict[str, str]]
+    subfields: list[dict[str, str]]
     call_no: Annotated[
         str,
         Field(
@@ -51,7 +51,7 @@ class BibCallNo(BaseDataField):
     tag: Annotated[Literal["852"], Field(alias="852")]
     ind1: Literal["8"]
     ind2: Literal[" ", ""]
-    subfields: List[Dict[str, str]]
+    subfields: list[dict[str, str]]
     call_no: Annotated[
         str,
         Field(
@@ -79,7 +79,7 @@ class BibVendorCode(BaseDataField):
     tag: Annotated[Literal["901"], Field(alias="901")]
     ind1: Literal[" ", ""]
     ind2: Literal[" ", ""]
-    subfields: List[Dict[str, str]]
+    subfields: list[dict[str, str]]
     vendor_code: Annotated[
         Literal["EVP", "AUXAM", "LEILA"],
         Field(exclude=True, examples=["EVP", "AUXAM", "LEILA"]),
@@ -97,10 +97,7 @@ class ControlField001(BaseControlField):
     """
 
     tag: Annotated[Literal["001"], Field(alias="001")]
-    value: Annotated[
-        str,
-        Field(examples=["ocn123456789", "ocm123456789"]),
-    ]
+    value: Annotated[str, Field(examples=["ocn123456789", "ocm123456789"])]
 
 
 class ControlField003(BaseControlField):
@@ -113,10 +110,7 @@ class ControlField003(BaseControlField):
     """
 
     tag: Annotated[Literal["003"], Field(alias="003")]
-    value: Annotated[
-        str,
-        Field(examples=["OCoLC", "DLC"]),
-    ]
+    value: Annotated[str, Field(examples=["OCoLC", "DLC"])]
 
 
 class ControlField005(BaseControlField):
@@ -224,7 +218,7 @@ class InvoiceField(BaseDataField):
     tag: Annotated[Literal["980"], Field(alias="980")]
     ind1: Literal[" ", ""]
     ind2: Literal[" ", ""]
-    subfields: List[Dict[str, str]]
+    subfields: list[dict[str, str]]
     invoice_date: Annotated[
         str,
         Field(
@@ -236,47 +230,22 @@ class InvoiceField(BaseDataField):
         ),
     ]
     invoice_price: Annotated[
-        str,
-        Field(
-            pattern=r"^\d{3,}$",
-            exclude=True,
-            examples=["100", "200"],
-        ),
+        str, Field(pattern=r"^\d{3,}$", exclude=True, examples=["100", "200"])
     ]
     invoice_shipping: Annotated[
-        str,
-        Field(
-            pattern=r"^\d{1,}$",
-            exclude=True,
-            examples=["1", "20"],
-        ),
+        str, Field(pattern=r"^\d{1,}$", exclude=True, examples=["1", "20"])
     ]
     invoice_tax: Annotated[
-        str,
-        Field(
-            pattern=r"^\d{1,}$",
-            exclude=True,
-            examples=["1", "20"],
-        ),
+        str, Field(pattern=r"^\d{1,}$", exclude=True, examples=["1", "20"])
     ]
     invoice_net_price: Annotated[
-        str,
-        Field(
-            pattern=r"^\d{3,}$",
-            exclude=True,
-            examples=["100", "200"],
-        ),
+        str, Field(pattern=r"^\d{3,}$", exclude=True, examples=["100", "200"])
     ]
     invoice_number: Annotated[
         str, Field(exclude=True, examples=["20051330", "20051331"])
     ]
     invoice_copies: Annotated[
-        str,
-        Field(
-            pattern=r"^\d{1,}$",
-            exclude=True,
-            examples=["1", "20", "4"],
-        ),
+        str, Field(pattern=r"^\d{1,}$", exclude=True, examples=["1", "20", "4"])
     ]
 
 
@@ -305,7 +274,7 @@ class ItemField(BaseDataField):
     tag: Annotated[Literal["949"], Field(alias="949")]
     ind1: Literal[" ", ""]
     ind2: Literal["1"]
-    subfields: List[Dict[str, str]]
+    subfields: list[dict[str, str]]
     item_call_no: Annotated[
         str,
         Field(
@@ -316,15 +285,12 @@ class ItemField(BaseDataField):
             exclude=True,
         ),
     ]
-    item_volume: Optional[
-        Annotated[str, Field(exclude=True, examples=["v. 1", "v. 10"])]
-    ] = None
-    item_agency: Optional[
-        Annotated[
-            Literal["43"],
-            Field(exclude=True, examples=["43"]),
-        ]
-    ] = None
+    item_volume: (
+        Annotated[str, Field(exclude=True, examples=["v. 1", "v. 10"])] | None
+    ) = None
+    item_agency: (
+        Annotated[Literal["43"], Field(exclude=True, examples=["43"])] | None
+    ) = None
     item_barcode: Annotated[
         str,
         Field(
@@ -336,44 +302,33 @@ class ItemField(BaseDataField):
         ),
     ]
     item_location: Annotated[
-        Optional[
-            Literal[
-                "rcmb2",
-                "rcmf2",
-                "rcmg2",
-                "rc2ma",
-                "rcmp2",
-                "rcmb2",
-                "rcpd2",
-                "rcph2",
-                "rcpm2",
-                "rcpt2",
-                "rc2cf",
-            ]
-        ],
+        Literal[
+            "rcmb2",
+            "rcmf2",
+            "rcmg2",
+            "rc2ma",
+            "rcmp2",
+            "rcmb2",
+            "rcpd2",
+            "rcph2",
+            "rcpm2",
+            "rcpt2",
+            "rc2cf",
+        ]
+        | None,
         Field(exclude=True, default=None, examples=["rcmb2", "rcmf2"]),
     ]
-    message: Optional[Annotated[str, Field(exclude=True)]] = None
+    message: Annotated[str, Field(exclude=True)] | None = None
     item_price: Annotated[
-        str,
-        Field(
-            pattern=r"^\d{1,}\.\d{2}$",
-            exclude=True,
-            examples=["1.00", "0.00"],
-        ),
+        str, Field(pattern=r"^\d{1,}\.\d{2}$", exclude=True, examples=["1.00", "0.00"])
     ]
-    item_type: Annotated[
-        Optional[Literal["2", "55"]], Field(exclude=True, default=None)
-    ]
-    item_message: Optional[Annotated[str, Field(exclude=True)]] = None
+    item_type: Annotated[Literal["2", "55"] | None, Field(exclude=True, default=None)]
+    item_message: Annotated[str, Field(exclude=True)] | None = None
     item_vendor_code: Annotated[
         Literal["EVP", "AUXAM", "LEILA"],
         Field(exclude=True, examples=["EVP", "AUXAM", "LEILA"]),
     ]
-    item_call_tag: Annotated[
-        Literal["8528"],
-        Field(exclude=True, examples=["8528"]),
-    ]
+    item_call_tag: Annotated[Literal["8528"], Field(exclude=True, examples=["8528"])]
 
     @model_validator(mode="after")
     def validate_item_agency(self) -> "ItemField":
@@ -402,7 +357,7 @@ class LCClass(BaseDataField):
     tag: Annotated[Literal["050"], Field(alias="050")]
     ind1: Literal[" ", "", "0", "1"]
     ind2: Literal["0", "4"]
-    subfields: List[Dict[str, str]]
+    subfields: list[dict[str, str]]
     lcc: Annotated[str, Field(exclude=True, examples=["PJ7962.H565", "DK504.932.R87"])]
 
     @model_validator(mode="after")
@@ -431,10 +386,9 @@ class LibraryField(BaseDataField):
     tag: Annotated[Literal["910"], Field(alias="910")]
     ind1: Literal[" ", ""]
     ind2: Literal[" ", ""]
-    subfields: List[Dict[str, str]]
+    subfields: list[dict[str, str]]
     library: Annotated[
-        Literal["RL", "BL", "BPL"],
-        Field(exclude=True, examples=["RL", "BL", "BPL"]),
+        Literal["RL", "BL", "BPL"], Field(exclude=True, examples=["RL", "BL", "BPL"])
     ]
 
 
@@ -460,9 +414,9 @@ class MonographDataField(BaseDataField):
             examples=["100", "710", "650", "245"],
         ),
     ]
-    ind1: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
-    ind2: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
-    subfields: List[Any]
+    ind1: Literal["", " "] | Annotated[str, Field(max_length=1, min_length=1)]
+    ind2: Literal["", " "] | Annotated[str, Field(max_length=1, min_length=1)]
+    subfields: list[Any]
 
 
 class OrderField(BaseDataField):
@@ -482,14 +436,9 @@ class OrderField(BaseDataField):
     tag: Annotated[Literal["960"], Field(alias="960")]
     ind1: Literal[" ", ""]
     ind2: Literal[" ", ""]
-    subfields: List[Dict[str, str]]
+    subfields: list[dict[str, str]]
     order_price: Annotated[
-        str,
-        Field(
-            pattern=r"^\d{3,}$",
-            exclude=True,
-            examples=["100", "200"],
-        ),
+        str, Field(pattern=r"^\d{3,}$", exclude=True, examples=["100", "200"])
     ]
     order_location: Annotated[
         Literal[
@@ -497,10 +446,7 @@ class OrderField(BaseDataField):
         ],
         Field(exclude=True),
     ]
-    order_fund: Annotated[
-        str,
-        Field(exclude=True, examples=["41901apprv"]),
-    ]
+    order_fund: Annotated[str, Field(exclude=True, examples=["41901apprv"])]
 
 
 class OtherDataField(BaseDataField):
@@ -525,6 +471,6 @@ class OtherDataField(BaseDataField):
             examples=["100", "710", "650", "245"],
         ),
     ]
-    ind1: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
-    ind2: Union[Literal["", " "], Annotated[str, Field(max_length=1, min_length=1)]]
-    subfields: List[Any]
+    ind1: Literal["", " "] | Annotated[str, Field(max_length=1, min_length=1)]
+    ind2: Literal["", " "] | Annotated[str, Field(max_length=1, min_length=1)]
+    subfields: list[Any]

@@ -2,7 +2,7 @@
 validate data"""
 
 from itertools import chain
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from pydantic import ValidationError
 from pydantic_core import InitErrorDetails, PydanticCustomError
@@ -15,8 +15,8 @@ from record_validator.utils import dict2subfield, field2dict, get_record_type
 
 
 def validate_all(
-    fields: List[Union[MarcField, Dict[str, Any]]],
-) -> List[Union[MarcField, Dict[str, Any]]]:
+    fields: list[MarcField | dict[str, Any]],
+) -> list[MarcField | dict[str, Any]]:
     """
     Validate MARC record fields. This function validates validates the fields of a
     MARC record based on the record type. It first validates the existence of all
@@ -57,8 +57,8 @@ def validate_all(
 
 
 def validate_fields(
-    fields: List[Union[MarcField, Dict[str, Any]]], record_type: str
-) -> List[InitErrorDetails]:
+    fields: list[MarcField | dict[str, Any]], record_type: str
+) -> list[InitErrorDetails]:
     """Validate the existence of all required fields and identify extra fields."""
     tag_list = [next(iter(field2dict(i))) for i in fields]
     required_tags = AllFields.required_fields()
@@ -90,14 +90,14 @@ def validate_fields(
     return extra_field_errors + missing_field_errors
 
 
-def validate_leader(input: Union[str, Leader]) -> str:
+def validate_leader(input: str | Leader) -> str:
     """Validate the leader"""
     return str(input)
 
 
 def validate_order_items(
-    fields: List[Union[MarcField, Dict[str, Any]]], error_locs: List[str]
-) -> List[InitErrorDetails]:
+    fields: list[MarcField | dict[str, Any]], error_locs: list[str]
+) -> list[InitErrorDetails]:
     """Validate the combination of values in order and item records."""
     field_list = [field2dict(i) for i in fields]
     tag_list = [next(iter(i)) for i in field_list]
@@ -117,11 +117,7 @@ def validate_order_items(
     assert len(order_locs) == 1, f"Expected 1 order location, got {len(order_locs)}"
     order_loc = list(chain(*order_locs))[0]
     order_items = [
-        {
-            "order_location": order_loc,
-            "item_location": il,
-            "item_type": it,
-        }
+        {"order_location": order_loc, "item_location": il, "item_type": it}
         for il, it in zip(list(chain(*item_locs)), list(chain(*item_types)))
     ]
     invalid_combos = [i for i in order_items if i not in ValidOrderItems.to_list()]

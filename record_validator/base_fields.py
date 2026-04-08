@@ -22,7 +22,7 @@ Functions:
         defined in the model are left as a dictionary.
 """
 
-from typing import Annotated, Any, Dict, List, Literal, Union
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 from pymarc import Field as MarcField
@@ -30,7 +30,7 @@ from pymarc import Field as MarcField
 from record_validator.constants import AllFields, AllSubfields
 
 
-def get_control_field_input(input: Union[MarcField, Dict[str, Any]]) -> Dict[str, Any]:
+def get_control_field_input(input: MarcField | dict[str, Any]) -> dict[str, Any]:
     if not isinstance(input, (MarcField, dict)):
         return input
     elif isinstance(input, MarcField):
@@ -46,8 +46,8 @@ def get_control_field_input(input: Union[MarcField, Dict[str, Any]]) -> Dict[str
 
 
 def get_data_field_input(
-    input: Union[MarcField, Dict[str, Any]], model: Any
-) -> Dict[str, Any]:
+    input: MarcField | dict[str, Any], model: Any
+) -> dict[str, Any]:
     if not isinstance(input, (MarcField, dict)):
         return input
     elif isinstance(input, dict):
@@ -103,7 +103,7 @@ class BaseControlField(BaseModel):
         return get_control_field_input(input)
 
     @model_serializer(mode="plain")
-    def serialize_control_field(self) -> Dict[str, str]:
+    def serialize_control_field(self) -> dict[str, str]:
         """Serialize the control field into a dictionary with the correct format."""
         return {self.tag: self.value}
 
@@ -133,9 +133,9 @@ class BaseDataField(BaseModel):
     )
 
     tag: Annotated[str, Field(pattern=r"0[1-9]\d|[1-9]\d\d", exclude=True)]
-    ind1: Union[Literal["", " "], Annotated[str, Field(pattern=r"^\d$")]]
-    ind2: Union[Literal["", " "], Annotated[str, Field(pattern=r"^\d$")]]
-    subfields: List[Dict[str, str]]
+    ind1: Literal["", " "] | Annotated[str, Field(pattern=r"^\d$")]
+    ind2: Literal["", " "] | Annotated[str, Field(pattern=r"^\d$")]
+    subfields: list[dict[str, str]]
 
     @model_validator(mode="before")
     @classmethod
@@ -144,9 +144,7 @@ class BaseDataField(BaseModel):
         return get_data_field_input(input, cls)
 
     @model_serializer(mode="plain")
-    def serialize_data_field(
-        self,
-    ) -> Dict[str, Dict[str, Union[str, List[Dict[str, str]]]]]:
+    def serialize_data_field(self) -> dict[str, dict[str, str | list[dict[str, str]]]]:
         """Serialize the data field into a dictionary with the correct format."""
         return {
             self.tag: {

@@ -2,14 +2,14 @@
 
 import re
 from itertools import chain
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from pymarc import Field as MarcField
 
 from record_validator.constants import RECAP_AUX_CALL_NO_PATTERN
 
 
-def dict2subfield(field: Dict[str, Any], code: str) -> List[Union[str, None]]:
+def dict2subfield(field: dict[str, Any], code: str) -> list[str | None]:
     """Extract subfield values from a MARC represented as a dict."""
     subfields = field[next(iter(field))]["subfields"]
     subfield_codes = list(chain(*[i.keys() for i in subfields]))
@@ -21,7 +21,7 @@ def dict2subfield(field: Dict[str, Any], code: str) -> List[Union[str, None]]:
     return out_list
 
 
-def field2dict(field: Union[MarcField, Dict[str, Any]]) -> Dict[str, Any]:
+def field2dict(field: MarcField | dict[str, Any]) -> dict[str, Any]:
     """Convert a MARC field to a dict."""
     if isinstance(field, MarcField) and field.tag.startswith("00"):
         return {field.tag: field.data}
@@ -41,7 +41,7 @@ def field2dict(field: Union[MarcField, Dict[str, Any]]) -> Dict[str, Any]:
     return {tag: {"ind1": ind1, "ind2": ind2, "subfields": subfields}}
 
 
-def get_record_type(fields: List[Union[MarcField, Dict[str, Any]]]) -> str:
+def get_record_type(fields: list[MarcField | dict[str, Any]]) -> str:
     """Determine the record type based on the fields present in a MARC record."""
     if not isinstance(fields, list) or not all(
         isinstance(i, (MarcField, dict)) for i in fields
