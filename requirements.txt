@@ -1,5 +1,0 @@
-annotated-types==0.7.0 ; python_version >= "3.12"
-pydantic-core==2.20.1 ; python_version >= "3.12"
-pydantic==2.8.2 ; python_version >= "3.12"
-pymarc==5.2.2 ; python_version >= "3.12"
-typing-extensions==4.12.2 ; python_version >= "3.12"

@@ -1,13 +1,13 @@
 [project]
 name = "record-validator"
-version = "0.2.0"
+version = "0.2.1"
 description = "MARC record validator for shelf-ready materials"
 authors = [{name = "Charlotte Kostelic", email = "charlottekostelic@bookops.org"}]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "pydantic (>=2.8.2)",
-    "pymarc (>=5.2.2)"
+    "pydantic>=2.8.2",
+    "pymarc>=5.2.2"
 ]
 
 [dependency-groups]
